@@ -49,22 +49,33 @@
 
   .chart-wrap {
     flex: 1 1 auto; overflow: auto; position: relative; background: #fff;
+    display: flex; flex-direction: column;
+  }
+  .month-bar {
+    display: flex; position: sticky; top: 0; z-index: 10; background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb; flex-shrink: 0;
+  }
+  .month-bar-label {
+    min-width: var(--label-w, 140px); max-width: var(--label-w, 140px);
+    font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;
+    letter-spacing: .5px; padding: 6px 12px; border-right: 1px solid #e5e7eb;
+    background: #f8fafc; position: sticky; left: 0; z-index: 11;
+  }
+  .month-bar-track {
+    display: flex; flex-shrink: 0;
+  }
+  .month-bar-track span {
+    text-align: center; font-size: 11px; font-weight: 600; color: #64748b;
+    padding: 6px 0; border-right: 1px solid #e5e7eb; flex-shrink: 0;
   }
 
   /* ── Gantt table ── */
   .gantt { display: grid; min-width: 100%; position: relative; }
   .gantt .label-col { position: sticky; left: 0; z-index: 4; background: #fff; border-right: 1px solid #e5e7eb; }
 
-  /* Month header row */
-  .month-header {
-    display: contents;
-  }
-  .month-cell {
-    text-align: center; font-size: 11px; font-weight: 600; color: #64748b;
-    padding: 6px 0; border-bottom: 1px solid #e5e7eb; background: #f8fafc;
-    border-right: 1px solid #f0f0f0;
-  }
-  .month-cell.label-col { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding-left: 12px; text-align: left; }
+  /* Month header row (legacy — now using sticky .month-bar instead) */
+  .month-header { display: contents; }
+  .month-cell { display: none; /* replaced by sticky month-bar */ }
 
   /* Swim-lane group header */
   .lane-header {
@@ -540,8 +551,8 @@ const TIMELINE_START = new Date(2026, 1, 1); // Feb 2026
 const TIMELINE_END   = new Date(2027, 4, 1); // May 2027 (to show through Apr)
 const TODAY          = new Date(2026, 3, 14); // Apr 14 2026
 
-const LABEL_WIDTH = 180;
-const DAY_WIDTH   = 3.2;
+const LABEL_WIDTH = 140;
+const DAY_WIDTH   = 5.0;
 const TOTAL_DAYS  = Math.round((TIMELINE_END - TIMELINE_START) / 864e5);
 const TRACK_WIDTH = TOTAL_DAYS * DAY_WIDTH;
 
@@ -554,6 +565,35 @@ function dayOffset(d) {
 function pxFromDate(d) {
   return dayOffset(d) * DAY_WIDTH;
 }
+// Generate week gridline positions (every Monday)
+function getWeekLines() {
+  const lines = [];
+  const d = new Date(TIMELINE_START);
+  // Advance to first Monday
+  while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
+  while (d < TIMELINE_END) {
+    lines.push(pxFromDate(d));
+    d.setDate(d.getDate() + 7);
+  }
+  return lines;
+}
+const WEEK_LINES = getWeekLines();
+
+function drawGridlines(container, months) {
+  // Month gridlines (solid, darker)
+  for (const m of months) {
+    const line = document.createElement('div');
+    line.style.cssText = 'position:absolute;top:0;bottom:0;width:1px;background:#dde1e7;left:' + m.px + 'px;';
+    container.appendChild(line);
+  }
+  // Week gridlines (lighter, between months)
+  for (const px of WEEK_LINES) {
+    const line = document.createElement('div');
+    line.style.cssText = 'position:absolute;top:0;bottom:0;width:1px;background:#f0f0f0;left:' + px + 'px;';
+    container.appendChild(line);
+  }
+}
+
 function statusColor(s) {
   if (!s) return '#d1d5db';
   return STATUS_COLORS[s.toLowerCase().trim()] || '#d1d5db';
@@ -638,28 +678,44 @@ function render(items) {
   gantt.style.gridTemplateColumns = `${LABEL_WIDTH}px ${TRACK_WIDTH}px`;
   gantt.style.width = `${LABEL_WIDTH + TRACK_WIDTH}px`;
 
-  // ── Month header row ──
-  const mLbl = document.createElement('div');
-  mLbl.className = 'month-cell label-col';
-  mLbl.textContent = 'Milestone';
-  gantt.appendChild(mLbl);
+  // ── Sticky month header bar (outside the grid) ──
+  const monthBar = document.createElement('div');
+  monthBar.className = 'month-bar';
+  monthBar.style.minWidth = `${LABEL_WIDTH + TRACK_WIDTH}px`;
+  monthBar.style.setProperty('--label-w', LABEL_WIDTH + 'px');
 
-  const mTrack = document.createElement('div');
-  mTrack.className = 'month-cell';
-  mTrack.style.position = 'relative';
-  mTrack.style.padding = '0';
-  mTrack.style.display = 'flex';
+  const mbLabel = document.createElement('div');
+  mbLabel.className = 'month-bar-label';
+  mbLabel.textContent = 'Milestone';
+  monthBar.appendChild(mbLabel);
+
+  const mbTrack = document.createElement('div');
+  mbTrack.className = 'month-bar-track';
+  mbTrack.style.position = 'relative';
+  mbTrack.style.width = TRACK_WIDTH + 'px';
+  // Month labels
   for (const m of months) {
     const mc = document.createElement('span');
     mc.style.width = m.width + 'px';
-    mc.style.textAlign = 'center';
-    mc.style.padding = '6px 0';
-    mc.style.borderRight = '1px solid #e5e7eb';
-    mc.style.flexShrink = '0';
     mc.textContent = m.label;
-    mTrack.appendChild(mc);
+    mbTrack.appendChild(mc);
   }
-  gantt.appendChild(mTrack);
+  // Week tick marks on the bottom of the header
+  for (const px of WEEK_LINES) {
+    const tick = document.createElement('div');
+    tick.style.cssText = 'position:absolute;bottom:0;width:1px;height:6px;background:#ccc;left:' + px + 'px;';
+    mbTrack.appendChild(tick);
+  }
+  // Month tick marks (taller)
+  for (const m of months) {
+    const tick = document.createElement('div');
+    tick.style.cssText = 'position:absolute;bottom:0;width:1px;height:10px;background:#999;left:' + m.px + 'px;';
+    mbTrack.appendChild(tick);
+  }
+  monthBar.appendChild(mbTrack);
+
+  // Insert month bar before the gantt grid
+  wrap.appendChild(monthBar);
 
   // ── Rows ──
   const barElements = []; // for tooltip binding
@@ -679,13 +735,9 @@ function render(items) {
 
     const lhTrack = document.createElement('div');
     lhTrack.className = 'lane-header-span';
-    // draw month gridlines
+    // draw gridlines (months + weeks)
     lhTrack.style.position = 'relative';
-    for (const m of months) {
-      const line = document.createElement('div');
-      line.style.cssText = `position:absolute;top:0;bottom:0;left:${m.px}px;width:1px;background:#f0f0f0;`;
-      lhTrack.appendChild(line);
-    }
+    drawGridlines(lhTrack, months);
     gantt.appendChild(lhTrack);
 
     // Items
@@ -700,12 +752,8 @@ function render(items) {
       // Track
       const rt = document.createElement('div');
       rt.className = 'row-track';
-      // month gridlines
-      for (const m of months) {
-        const line = document.createElement('div');
-        line.style.cssText = `position:absolute;top:0;bottom:0;left:${m.px}px;width:1px;background:#f0f0f0;`;
-        rt.appendChild(line);
-      }
+      // gridlines (months + weeks)
+      drawGridlines(rt, months);
 
       const sColor = statusColor(it.status);
       const wColor = wsColor(ws);
