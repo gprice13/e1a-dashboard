@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E1a Solo Station — Program Timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f1f5f9;
+    color: #1a1a1a;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* ── Status colors ── */
+  :root {
+    --complete:      #22c55e;
+    --in-progress:   #6366f1;
+    --not-started:   #d1d5db;
+    --open:          #eab308;
+    --blocked:       #ef4444;
+    --planned:       #a855f7;
+    --investigating: #f97316;
+    --decided:       #22c55e;
+
+    --ws-program:    #6366f1;
+    --ws-squid:      #0891b2;
+    --ws-esw:        #059669;
+    --ws-spa:        #7c3aed;
+    --ws-ee:         #d97706;
+  }
+
+  /* ── Layout ── */
+  .page { display: flex; flex-direction: column; height: 100vh; max-height: 660px; }
+
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; border-bottom: 1px solid #e5e7eb; background: #fff;
+    flex-shrink: 0;
+  }
+  .header h1 { font-size: 15px; font-weight: 700; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #64748b; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .chart-wrap {
+    flex: 1 1 auto; overflow: auto; position: relative; background: #fff;
+  }
+
+  /* ── Gantt table ── */
+  .gantt { display: grid; min-width: 100%; position: relative; }
+  .gantt .label-col { position: sticky; left: 0; z-index: 4; background: #fff; border-right: 1px solid #e5e7eb; }
+
+  /* Month header row */
+  .month-header {
+    display: contents;
+  }
+  .month-cell {
+    text-align: center; font-size: 11px; font-weight: 600; color: #64748b;
+    padding: 6px 0; border-bottom: 1px solid #e5e7eb; background: #f8fafc;
+    border-right: 1px solid #f0f0f0;
+  }
+  .month-cell.label-col { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding-left: 12px; text-align: left; }
+
+  /* Swim-lane group header */
+  .lane-header {
+    display: contents;
+  }
+  .lane-header-cell {
+    font-size: 12px; font-weight: 700; padding: 6px 12px;
+    border-bottom: 1px solid #e5e7eb; background: #f8fafc;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .lane-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .lane-header-span { border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
+
+  /* Row */
+  .row { display: contents; }
+  .row-label {
+    font-size: 11px; padding: 0 12px; display: flex; align-items: center;
+    border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; min-height: 28px; background: #fff;
+    position: sticky; left: 0; z-index: 3;
+  }
+  .row-track {
+    position: relative; border-bottom: 1px solid #f0f0f0; min-height: 28px;
+  }
+
+  /* Bar */
+  .bar {
+    position: absolute; top: 5px; height: 18px; border-radius: 4px;
+    cursor: pointer; transition: filter .15s;
+    min-width: 6px;
+  }
+  .bar:hover { filter: brightness(1.15) drop-shadow(0 1px 3px rgba(0,0,0,.18)); z-index: 5; }
+
+  /* Diamond milestone */
+  .diamond {
+    position: absolute; top: 6px; width: 14px; height: 14px;
+    transform: rotate(45deg); border-radius: 2px; cursor: pointer;
+    transition: filter .15s;
+  }
+  .diamond:hover { filter: brightness(1.15) drop-shadow(0 1px 3px rgba(0,0,0,.18)); z-index: 5; }
+
+  /* Today line */
+  .today-line {
+    position: absolute; top: 0; bottom: 0; width: 2px; background: #3b82f6;
+    z-index: 6; pointer-events: none;
+  }
+  .today-label {
+    position: absolute; top: 0; font-size: 9px; font-weight: 700; color: #3b82f6;
+    background: #eff6ff; padding: 1px 4px; border-radius: 0 0 4px 4px;
+    transform: translateX(-50%); white-space: nowrap; z-index: 7; pointer-events: none;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed; z-index: 100; background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 10px 14px; font-size: 12px; line-height: 1.5;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12); pointer-events: none;
+    max-width: 300px; display: none;
+  }
+  .tooltip .tt-title { font-weight: 700; margin-bottom: 4px; }
+  .tooltip .tt-row { display: flex; gap: 6px; }
+  .tooltip .tt-lbl { color: #64748b; min-width: 48px; }
+  .tooltip .tt-status { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #fff; }
+
+  /* Error / loading */
+  .overlay {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; gap: 12px; padding: 24px; text-align: center;
+  }
+  .overlay p { font-size: 14px; color: #64748b; max-width: 400px; }
+  .retry-btn {
+    padding: 8px 20px; border-radius: 6px; border: 1px solid #e5e7eb;
+    background: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+    color: #6366f1; transition: background .15s;
+  }
+  .retry-btn:hover { background: #f1f5f9; }
+  .spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  <div class="header">
+    <h1>📅 Program Timeline</h1>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <!-- Chart area -->
+  <div class="chart-wrap" id="chartWrap">
+    <div class="overlay" id="loadingOverlay">
+      <div class="spinner"></div>
+      <p>Loading timeline from Google Sheets…</p>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+var TIMELINE_DATA = [
+  {
+    "Workstream": "Program",
+    "Milestone": "E1a Kickoff",
+    "Start Date": "2026-03-11",
+    "End Date": "2026-03-16",
+    "Status": "Complete",
+    "DRI": "Alice Yen / Vani Viswanathan",
+    "Notes": "PRD shared, first core meeting",
+    "Source": "Slack #e1a-core 3/11"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "Architecture Phase",
+    "Start Date": "2026-03-16",
+    "End Date": "2026-09-25",
+    "Status": "In Progress",
+    "DRI": "Vani Viswanathan",
+    "Notes": "Core meetings weekly, key decisions in flight",
+    "Source": "E1a Core Meeting Notes"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "Design Lock (Mock-up/Proto)",
+    "Start Date": "2026-05-07",
+    "End Date": "2026-05-07",
+    "Status": "Not Started",
+    "DRI": "Vani Viswanathan / Luxshare",
+    "Notes": "Luxshare milestone",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "Proto Samples Shipment",
+    "Start Date": "2026-06-29",
+    "End Date": "2026-06-29",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "From Luxshare schedule",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "OK2Tool EVT",
+    "Start Date": "2026-07-09",
+    "End Date": "2026-07-09",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "From Luxshare schedule",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "OK2Fab EVT",
+    "Start Date": "2026-07-22",
+    "End Date": "2026-07-22",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "From Luxshare schedule",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "EVT Units Shipment",
+    "Start Date": "2026-09-04",
+    "End Date": "2026-09-04",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "From Luxshare schedule",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "Alpha",
+    "Start Date": "2026-10-01",
+    "End Date": "2026-12-31",
+    "Status": "Not Started",
+    "DRI": "Vani Viswanathan",
+    "Notes": "Q4 target per go/e1adash",
+    "Source": "Alice Yen Slack 4/9"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "Tooling Mod for DVT",
+    "Start Date": "2026-11-26",
+    "End Date": "2026-11-26",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "From Luxshare schedule",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "DVT Units Shipment",
+    "Start Date": "2026-12-31",
+    "End Date": "2026-12-31",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "From Luxshare schedule",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "Line Transfer (Dongguan to Vietnam)",
+    "Start Date": "2026-12-31",
+    "End Date": "2027-01-28",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "Transit period",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "Vietnam Line Ready",
+    "Start Date": "2027-02-24",
+    "End Date": "2027-02-24",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "Factory ready in Vietnam",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "Program",
+    "Milestone": "PVT/MP Units Shipment",
+    "Start Date": "2027-03-09",
+    "End Date": "2027-03-09",
+    "Status": "Not Started",
+    "DRI": "Luxshare",
+    "Notes": "From Luxshare schedule",
+    "Source": "Jaime Frias Slack 4/8"
+  },
+  {
+    "Workstream": "SQUID",
+    "Milestone": "Board ID / CDT Decision",
+    "Start Date": "2026-04-09",
+    "End Date": "2026-04-30",
+    "Status": "Open",
+    "DRI": "Zac Crosby",
+    "Notes": "Almost out of HW product IDs - CDT vs HW-based",
+    "Source": "Slack #e1a-core 4/9"
+  },
+  {
+    "Workstream": "SQUID",
+    "Milestone": "Franken-Proto Bring-up",
+    "Start Date": "2026-03-15",
+    "End Date": "2026-05-15",
+    "Status": "In Progress",
+    "DRI": "Charles Guan",
+    "Notes": "K1a MLB + STUSB4531 PD controller, device tree",
+    "Source": "Slack #squid-dev"
+  },
+  {
+    "Workstream": "SQUID",
+    "Milestone": "USB PD Controller Eval",
+    "Start Date": "2026-03-01",
+    "End Date": "2026-05-30",
+    "Status": "In Progress",
+    "DRI": "Charles Guan",
+    "Notes": "MPS vs Maxim evaluation on eval kit",
+    "Source": "Slack #e1a-ee"
+  },
+  {
+    "Workstream": "SQUID",
+    "Milestone": "X2c MLB Fork",
+    "Start Date": "2026-06-01",
+    "End Date": "2026-07-31",
+    "Status": "Blocked",
+    "DRI": "Cory Douthat",
+    "Notes": "Blocked on X2c discrete memory qual",
+    "Source": "E1a Core Meeting Notes"
+  },
+  {
+    "Workstream": "SQUID",
+    "Milestone": "Pre-Dev Build SW Ready",
+    "Start Date": "2026-06-01",
+    "End Date": "2026-08-31",
+    "Status": "Not Started",
+    "DRI": "Zac Crosby",
+    "Notes": "Build strategy for multiple HW targets TBD",
+    "Source": ""
+  },
+  {
+    "Workstream": "ESW",
+    "Milestone": "ESW Engagement Kickoff",
+    "Start Date": "2026-03-11",
+    "End Date": "2026-03-31",
+    "Status": "Complete",
+    "DRI": "Derek Timmerman",
+    "Notes": "Introduced ESW to E1a",
+    "Source": "Derek Slack 3/11"
+  },
+  {
+    "Workstream": "ESW",
+    "Milestone": "SPE MCO Reuse Validation",
+    "Start Date": "2026-04-01",
+    "End Date": "2026-06-30",
+    "Status": "In Progress",
+    "DRI": "Ben Brown",
+    "Notes": "Leveraging K1 SPE MCO for E1a",
+    "Source": "E1a Core Meeting 4/1"
+  },
+  {
+    "Workstream": "ESW",
+    "Milestone": "NFC Architecture Confirmation",
+    "Start Date": "2026-03-15",
+    "End Date": "2026-04-15",
+    "Status": "In Progress",
+    "DRI": "John Reimers / Ben Brown",
+    "Notes": "Path 2 decided; ID confirming concept direction and coil size by 4/15",
+    "Source": "Vani Slack 4/1"
+  },
+  {
+    "Workstream": "ESW",
+    "Milestone": "NFC Coil Prototyping (Amphenol)",
+    "Start Date": "2026-05-01",
+    "End Date": "2026-06-29",
+    "Status": "Not Started",
+    "DRI": "John Reimers / Emad Bidari",
+    "Notes": "Engage Amphenol early May, proto modules before proto samples",
+    "Source": "Vani Slack 3/31"
+  },
+  {
+    "Workstream": "ESW",
+    "Milestone": "NFC VDDP Investigation",
+    "Start Date": "2026-03-20",
+    "End Date": "2026-05-15",
+    "Status": "Investigating",
+    "DRI": "Ben Brown",
+    "Notes": "X2c bug - retry configurable per-product for E1a",
+    "Source": "Slack #x2c-ee"
+  },
+  {
+    "Workstream": "ESW",
+    "Milestone": "SPE Firmware for Franken-Proto",
+    "Start Date": "2026-05-01",
+    "End Date": "2026-07-31",
+    "Status": "Not Started",
+    "DRI": "Ben Brown",
+    "Notes": "Depends on franken-proto HW availability",
+    "Source": ""
+  },
+  {
+    "Workstream": "ESW",
+    "Milestone": "Payment Cert Planning",
+    "Start Date": "2026-06-01",
+    "End Date": "2026-09-30",
+    "Status": "Not Started",
+    "DRI": "Ben Brown",
+    "Notes": "Cert timeline TBD",
+    "Source": ""
+  },
+  {
+    "Workstream": "SPA/Apps",
+    "Milestone": "OOBE / Tap-to-Set-Up Scoping",
+    "Start Date": "2026-04-01",
+    "End Date": "2026-06-30",
+    "Status": "Planned",
+    "DRI": "John Koryfidis",
+    "Notes": "SPA bandwidth after K1 Alpha - Q2",
+    "Source": "Slack #tap-to-set-up 2/4"
+  },
+  {
+    "Workstream": "SPA/Apps",
+    "Milestone": "superPOS Integration Planning",
+    "Start Date": "2026-07-01",
+    "End Date": "2026-09-30",
+    "Status": "Not Started",
+    "DRI": "Justin Chan",
+    "Notes": "E1a rides superPOS golden path",
+    "Source": "Slack #ask-squid-dev 3/3"
+  },
+  {
+    "Workstream": "SPA/Apps",
+    "Milestone": "Check Reopen Without Stand",
+    "Start Date": "2026-04-01",
+    "End Date": "2026-09-30",
+    "Status": "Open",
+    "DRI": "TBD",
+    "Notes": "James Schonzeit: E1a is forcing function",
+    "Source": "Slack #sq-cr-giant-leap"
+  },
+  {
+    "Workstream": "EE Dependency",
+    "Milestone": "ID/UX Model Review",
+    "Start Date": "2026-03-15",
+    "End Date": "2026-04-15",
+    "Status": "In Progress",
+    "DRI": "Miguel Harry",
+    "Notes": "Models arrived SEA office Apr 6, internal study Apr 8",
+    "Source": "Slack #e1a-core 4/6"
+  },
+  {
+    "Workstream": "EE Dependency",
+    "Milestone": "NFC Coil Design and Downselection",
+    "Start Date": "2026-03-15",
+    "End Date": "2026-05-15",
+    "Status": "In Progress",
+    "DRI": "Tom Buttner / Emad Bidari",
+    "Notes": "Depends on ID confirming concept direction",
+    "Source": "Vani Slack 3/31"
+  },
+  {
+    "Workstream": "EE Dependency",
+    "Milestone": "PD Controller Selection",
+    "Start Date": "2026-02-01",
+    "End Date": "2026-05-30",
+    "Status": "In Progress",
+    "DRI": "Tom Buttner / RaeAnne Dietz",
+    "Notes": "EE-7360 - MPS vs Maxim",
+    "Source": "JIRA EE-7360"
+  },
+  {
+    "Workstream": "EE Dependency",
+    "Milestone": "X2c Memory Qual",
+    "Start Date": "2026-03-01",
+    "End Date": "2026-06-30",
+    "Status": "In Progress",
+    "DRI": "Cory Douthat",
+    "Notes": "Gates MLB fork for E1a",
+    "Source": "E1a Core Meeting Notes"
+  },
+  {
+    "Workstream": "EE Dependency",
+    "Milestone": "Hub (H6) Design - Luxshare",
+    "Start Date": "2026-03-25",
+    "End Date": "2026-06-30",
+    "Status": "In Progress",
+    "DRI": "Jaime Frias / Alice Yen",
+    "Notes": "H52 with CMF changes + new regulator, RFQ in progress",
+    "Source": "Alice Yen Slack 3/25"
+  },
+  {
+    "Workstream": "EE Dependency",
+    "Milestone": "No Built-in Swipe Decision",
+    "Start Date": "2026-04-14",
+    "End Date": "2026-04-14",
+    "Status": "Decided",
+    "DRI": "Alice Yen",
+    "Notes": "R42 USB-C accessory instead - PRD updated",
+    "Source": "Alice Yen Slack 4/14"
+  }
+];
+
+/* ================================================================
+   CONFIG
+   ================================================================ */
+const SHEET_ID   = '1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ';
+const SHEET_NAME = 'Timeline';
+const FETCH_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+const STATUS_COLORS = {
+  'complete':      '#22c55e',
+  'in progress':   '#6366f1',
+  'not started':   '#d1d5db',
+  'open':          '#eab308',
+  'blocked':       '#ef4444',
+  'planned':       '#a855f7',
+  'investigating': '#f97316',
+  'decided':       '#22c55e',
+};
+
+const WS_ORDER  = ['Program', 'SQUID', 'ESW', 'SPA/Apps', 'EE Dependency'];
+const WS_COLORS = {
+  'Program':       '#6366f1',
+  'SQUID':         '#0891b2',
+  'ESW':           '#059669',
+  'SPA/Apps':      '#7c3aed',
+  'EE Dependency': '#d97706',
+};
+
+const TIMELINE_START = new Date(2026, 1, 1); // Feb 2026
+const TIMELINE_END   = new Date(2027, 4, 1); // May 2027 (to show through Apr)
+const TODAY          = new Date(2026, 3, 14); // Apr 14 2026
+
+const LABEL_WIDTH = 180;
+const DAY_WIDTH   = 3.2;
+const TOTAL_DAYS  = Math.round((TIMELINE_END - TIMELINE_START) / 864e5);
+const TRACK_WIDTH = TOTAL_DAYS * DAY_WIDTH;
+
+/* ================================================================
+   HELPERS
+   ================================================================ */
+function dayOffset(d) {
+  return Math.round((d - TIMELINE_START) / 864e5);
+}
+function pxFromDate(d) {
+  return dayOffset(d) * DAY_WIDTH;
+}
+function statusColor(s) {
+  if (!s) return '#d1d5db';
+  return STATUS_COLORS[s.toLowerCase().trim()] || '#d1d5db';
+}
+function wsColor(ws) {
+  return WS_COLORS[ws] || '#94a3b8';
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function parseGDate(v) {
+  if (!v) return null;
+  // gviz returns "Date(y,m,d)" (month 0-indexed)
+  if (v.startsWith && v.startsWith('Date(')) {
+    const parts = v.replace('Date(','').replace(')','').split(',').map(Number);
+    return new Date(parts[0], parts[1], parts[2]);
+  }
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
+}
+function cellVal(cell) {
+  if (!cell) return null;
+  if (cell.v != null && String(cell.v).startsWith('Date(')) return cell.v;
+  if (cell.f) return cell.f;
+  return cell.v;
+}
+
+/* ================================================================
+   FETCH & PARSE
+   ================================================================ */
+async function fetchData() {
+  // Using embedded data (synced from Google Sheet by Goose)
+  const items = [];
+  for (const r of TIMELINE_DATA) {
+    const ws = r['Workstream'] || '';
+    const name = r['Milestone'] || '';
+    if (!ws || !name) continue;
+    const startD = r['Start Date'] ? new Date(r['Start Date'] + 'T00:00:00') : null;
+    const endD = r['End Date'] ? new Date(r['End Date'] + 'T00:00:00') : null;
+    const status = r['Status'] || '';
+    const dri = r['DRI'] || '';
+    const notes = r['Notes'] || '';
+    const source = r['Source'] || '';
+    items.push({ ws, name, startD, endD, status, dri, notes, source });
+  }
+  return items;
+}
+
+/* ================================================================
+   RENDER
+   ================================================================ */
+function render(items) {
+  const wrap = document.getElementById('chartWrap');
+  wrap.innerHTML = '';
+
+  // Group by workstream
+  const groups = {};
+  for (const ws of WS_ORDER) groups[ws] = [];
+  for (const it of items) {
+    const key = WS_ORDER.find(w => w.toLowerCase() === it.ws.toLowerCase().trim()) || it.ws;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(it);
+  }
+
+  // Build months array
+  const months = [];
+  let cur = new Date(TIMELINE_START);
+  while (cur < TIMELINE_END) {
+    const next = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+    months.push({ date: new Date(cur), label: cur.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), px: pxFromDate(cur), width: (Math.min(next, TIMELINE_END) - cur) / 864e5 * DAY_WIDTH });
+    cur = next;
+  }
+
+  // Count total rows (headers + items)
+  let totalRows = 0;
+  for (const ws of WS_ORDER) { if (groups[ws]?.length) totalRows += 1 + groups[ws].length; }
+
+  // Build container
+  const gantt = document.createElement('div');
+  gantt.className = 'gantt';
+  gantt.style.gridTemplateColumns = `${LABEL_WIDTH}px ${TRACK_WIDTH}px`;
+  gantt.style.width = `${LABEL_WIDTH + TRACK_WIDTH}px`;
+
+  // ── Month header row ──
+  const mLbl = document.createElement('div');
+  mLbl.className = 'month-cell label-col';
+  mLbl.textContent = 'Milestone';
+  gantt.appendChild(mLbl);
+
+  const mTrack = document.createElement('div');
+  mTrack.className = 'month-cell';
+  mTrack.style.position = 'relative';
+  mTrack.style.padding = '0';
+  mTrack.style.display = 'flex';
+  for (const m of months) {
+    const mc = document.createElement('span');
+    mc.style.width = m.width + 'px';
+    mc.style.textAlign = 'center';
+    mc.style.padding = '6px 0';
+    mc.style.borderRight = '1px solid #e5e7eb';
+    mc.style.flexShrink = '0';
+    mc.textContent = m.label;
+    mTrack.appendChild(mc);
+  }
+  gantt.appendChild(mTrack);
+
+  // ── Rows ──
+  const barElements = []; // for tooltip binding
+
+  for (const ws of WS_ORDER) {
+    const wsItems = groups[ws];
+    if (!wsItems || !wsItems.length) continue;
+
+    // Lane header
+    const lhLabel = document.createElement('div');
+    lhLabel.className = 'lane-header-cell label-col';
+    lhLabel.innerHTML = `<span class="lane-dot" style="background:${wsColor(ws)}"></span>${ws}`;
+    lhLabel.style.position = 'sticky';
+    lhLabel.style.left = '0';
+    lhLabel.style.zIndex = '4';
+    gantt.appendChild(lhLabel);
+
+    const lhTrack = document.createElement('div');
+    lhTrack.className = 'lane-header-span';
+    // draw month gridlines
+    lhTrack.style.position = 'relative';
+    for (const m of months) {
+      const line = document.createElement('div');
+      line.style.cssText = `position:absolute;top:0;bottom:0;left:${m.px}px;width:1px;background:#f0f0f0;`;
+      lhTrack.appendChild(line);
+    }
+    gantt.appendChild(lhTrack);
+
+    // Items
+    for (const it of wsItems) {
+      // Label
+      const rl = document.createElement('div');
+      rl.className = 'row-label';
+      rl.textContent = it.name;
+      rl.title = it.name;
+      gantt.appendChild(rl);
+
+      // Track
+      const rt = document.createElement('div');
+      rt.className = 'row-track';
+      // month gridlines
+      for (const m of months) {
+        const line = document.createElement('div');
+        line.style.cssText = `position:absolute;top:0;bottom:0;left:${m.px}px;width:1px;background:#f0f0f0;`;
+        rt.appendChild(line);
+      }
+
+      const sColor = statusColor(it.status);
+      const wColor = wsColor(ws);
+
+      if (it.startD && it.endD && it.endD.getTime() !== it.startD.getTime()) {
+        // Range bar
+        const left = pxFromDate(it.startD);
+        const width = Math.max(6, pxFromDate(it.endD) - left);
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.left = left + 'px';
+        bar.style.width = width + 'px';
+        bar.style.background = `linear-gradient(135deg, ${wColor}, ${sColor})`;
+        bar.dataset.idx = barElements.length;
+        barElements.push(it);
+        rt.appendChild(bar);
+      } else {
+        // Diamond milestone (single date or only start)
+        const d = it.startD || it.endD;
+        if (d) {
+          const left = pxFromDate(d) - 7;
+          const dia = document.createElement('div');
+          dia.className = 'diamond';
+          dia.style.left = left + 'px';
+          dia.style.background = sColor;
+          dia.style.border = `2px solid ${wColor}`;
+          dia.dataset.idx = barElements.length;
+          barElements.push(it);
+          rt.appendChild(dia);
+        }
+      }
+
+      gantt.appendChild(rt);
+    }
+  }
+
+  wrap.appendChild(gantt);
+
+  // ── Today line ──
+  const todayPx = pxFromDate(TODAY) + LABEL_WIDTH;
+  const tLine = document.createElement('div');
+  tLine.className = 'today-line';
+  tLine.style.left = todayPx + 'px';
+  wrap.appendChild(tLine);
+
+  const tLabel = document.createElement('div');
+  tLabel.className = 'today-label';
+  tLabel.textContent = 'Today';
+  tLabel.style.left = (todayPx + 1) + 'px';
+  wrap.appendChild(tLabel);
+
+  // ── Tooltip ──
+  const tip = document.getElementById('tooltip');
+  gantt.addEventListener('mousemove', (e) => {
+    const el = e.target.closest('.bar, .diamond');
+    if (!el) { tip.style.display = 'none'; return; }
+    const it = barElements[el.dataset.idx];
+    if (!it) { tip.style.display = 'none'; return; }
+    tip.innerHTML = `
+      <div class="tt-title">${it.name}</div>
+      <div class="tt-row"><span class="tt-lbl">Status</span><span class="tt-status" style="background:${statusColor(it.status)}">${it.status || '—'}</span></div>
+      <div class="tt-row"><span class="tt-lbl">Start</span><span>${fmtDate(it.startD)}</span></div>
+      <div class="tt-row"><span class="tt-lbl">End</span><span>${fmtDate(it.endD)}</span></div>
+      ${it.dri   ? `<div class="tt-row"><span class="tt-lbl">DRI</span><span>${it.dri}</span></div>` : ''}
+      ${it.notes ? `<div class="tt-row"><span class="tt-lbl">Notes</span><span>${it.notes}</span></div>` : ''}
+    `;
+    tip.style.display = 'block';
+    // position
+    let tx = e.clientX + 14;
+    let ty = e.clientY + 14;
+    const tr = tip.getBoundingClientRect();
+    if (tx + tr.width > window.innerWidth - 8) tx = e.clientX - tr.width - 10;
+    if (ty + tr.height > window.innerHeight - 8) ty = e.clientY - tr.height - 10;
+    tip.style.left = tx + 'px';
+    tip.style.top  = ty + 'px';
+  });
+  gantt.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+
+  // ── Legend ──
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  for (const [label, color] of Object.entries(STATUS_COLORS)) {
+    if (label === 'decided') continue; // same as complete
+    const li = document.createElement('div');
+    li.className = 'legend-item';
+    li.innerHTML = `<span class="legend-swatch" style="background:${color}"></span>${label.charAt(0).toUpperCase() + label.slice(1)}`;
+    legend.appendChild(li);
+  }
+
+  // Scroll so today is roughly visible
+  const scrollTarget = Math.max(0, todayPx - wrap.clientWidth / 3);
+  wrap.scrollLeft = scrollTarget;
+}
+
+/* ================================================================
+   ERROR UI
+   ================================================================ */
+function showError(msg) {
+  const wrap = document.getElementById('chartWrap');
+  wrap.innerHTML = `
+    <div class="overlay">
+      <svg width="40" height="40" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#ef4444" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>
+      <p>Unable to load timeline data.<br><span style="font-size:12px;color:#94a3b8">${msg || 'Check your network connection or sheet permissions.'}</span></p>
+      <button class="retry-btn" onclick="init()">↻ Retry</button>
+    </div>
+  `;
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+async function init() {
+  const wrap = document.getElementById('chartWrap');
+  wrap.innerHTML = '<div class="overlay"><div class="spinner"></div><p>Loading timeline from Google Sheets…</p></div>';
+  try {
+    const items = await fetchData();
+    if (!items.length) throw new Error('No rows returned');
+    render(items);
+  } catch (err) {
+    console.error('Timeline fetch error:', err);
+    showError(err.message);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

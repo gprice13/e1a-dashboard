@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRI Directory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f1f5f9;
+    color: #1a1a1a;
+    padding: 24px;
+    line-height: 1.5;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .search-box {
+    position: relative;
+    width: 280px;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    background: #fff;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box input:focus {
+    border-color: #0891b2;
+    box-shadow: 0 0 0 3px rgba(8,145,178,0.1);
+  }
+
+  .search-box svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+  }
+
+  .filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    background: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover {
+    border-color: #cbd5e1;
+    color: #1a1a1a;
+  }
+
+  .filter-btn.active {
+    background: #1a1a1a;
+    color: #fff;
+    border-color: #1a1a1a;
+  }
+
+  .table-container {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  tbody tr:hover {
+    background: #eef2ff;
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  tbody td {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #1a1a1a;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  .badge-squid    { background: #0891b2; }
+  .badge-esw      { background: #059669; }
+  .badge-spa      { background: #7c3aed; }
+  .badge-ee       { background: #d97706; }
+  .badge-program  { background: #6366f1; }
+  .badge-default  { background: #94a3b8; }
+
+  .no-results {
+    text-align: center;
+    padding: 48px 16px;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+
+  .error-state {
+    text-align: center;
+    padding: 64px 24px;
+  }
+
+  .error-state p {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .retry-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #0891b2;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .retry-btn:hover {
+    background: #0e7490;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 64px 16px;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #0891b2;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-bottom: 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .count {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DRI Directory</h1>
+  <div class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="Search by name, role, or focus area…">
+  </div>
+</div>
+
+<div class="filters" id="filters">
+  <button class="filter-btn active" data-filter="All">All</button>
+  <button class="filter-btn" data-filter="SQUID">SQUID</button>
+  <button class="filter-btn" data-filter="ESW">ESW</button>
+  <button class="filter-btn" data-filter="SPA/Apps">SPA/Apps</button>
+  <button class="filter-btn" data-filter="EE">EE</button>
+  <button class="filter-btn" data-filter="Program">Program</button>
+</div>
+
+<div class="count" id="count"></div>
+
+<div class="table-container" id="tableContainer">
+  <div class="loading"><div class="spinner"></div><br>Loading DRI data…</div>
+</div>
+
+<script>
+var DRI_DATA = [
+  {
+    "Name": "Zac Crosby",
+    "Function": "SQUID",
+    "Role": "Platform Lead",
+    "Focus Area": "USB PD, Board IDs, CDT, Pre-dev-build"
+  },
+  {
+    "Name": "Charles Guan",
+    "Function": "SQUID",
+    "Role": "SW Engineer",
+    "Focus Area": "Device tree, Franken-proto bring-up"
+  },
+  {
+    "Name": "Cory Douthat",
+    "Function": "SQUID",
+    "Role": "SW Engineer",
+    "Focus Area": "Discrete memory layout, X2c to E1a MLB fork"
+  },
+  {
+    "Name": "Justin Chan",
+    "Function": "SQUID",
+    "Role": "SW Engineer",
+    "Focus Area": "superPOS, Build/release train"
+  },
+  {
+    "Name": "Edmond Gagnon",
+    "Function": "SQUID",
+    "Role": "SW Engineer",
+    "Focus Area": "Remote device access tools"
+  },
+  {
+    "Name": "Ben Brown",
+    "Function": "ESW",
+    "Role": "Firmware Engineer",
+    "Focus Area": "SPE firmware, NFC, Cert, Payment architecture"
+  },
+  {
+    "Name": "Christopher C",
+    "Function": "ESW",
+    "Role": "Firmware Engineer",
+    "Focus Area": "TBD - newly assigned to E1a"
+  },
+  {
+    "Name": "Derek Timmerman",
+    "Function": "ESW",
+    "Role": "Manager",
+    "Focus Area": "ESW program oversight"
+  },
+  {
+    "Name": "John Koryfidis",
+    "Function": "SPA/Apps",
+    "Role": "SPA Lead",
+    "Focus Area": "OOBE / Tap-to-Set-Up"
+  },
+  {
+    "Name": "James Schonzeit",
+    "Function": "SPA/Apps",
+    "Role": "Product",
+    "Focus Area": "Check reopen without Stand"
+  },
+  {
+    "Name": "Tom Buttner",
+    "Function": "EE",
+    "Role": "EE Lead",
+    "Focus Area": "Architecture, NFC, PD controller, Hub"
+  },
+  {
+    "Name": "RaeAnne Dietz",
+    "Function": "EE",
+    "Role": "EE Engineer",
+    "Focus Area": "PD controller, Power, MLB, Display"
+  },
+  {
+    "Name": "Emad Bidari",
+    "Function": "EE",
+    "Role": "NFC Specialist",
+    "Focus Area": "NFC coil design"
+  },
+  {
+    "Name": "John Reimers",
+    "Function": "EE",
+    "Role": "EE Engineer",
+    "Focus Area": "NFC architecture"
+  },
+  {
+    "Name": "Vani Viswanathan",
+    "Function": "Program",
+    "Role": "EPM",
+    "Focus Area": "Schedule, Coordination"
+  },
+  {
+    "Name": "Alice Yen",
+    "Function": "Program",
+    "Role": "PM",
+    "Focus Area": "Forecasting, Hub/power strategy"
+  },
+  {
+    "Name": "Catherine Tran",
+    "Function": "Program",
+    "Role": "PD/ME",
+    "Focus Area": "NFC tap area, CAD studies"
+  },
+  {
+    "Name": "Miguel Harry",
+    "Function": "Program",
+    "Role": "ID",
+    "Focus Area": "UX models, Payment location studies"
+  },
+  {
+    "Name": "Jaime Frias",
+    "Function": "Program",
+    "Role": "ME",
+    "Focus Area": "Accessories, Power adapter, Luxshare vendor"
+  },
+  {
+    "Name": "Greg Fulco",
+    "Function": "Program",
+    "Role": "Product",
+    "Focus Area": "Product requirements, BT decision"
+  }
+];
+
+(function() {
+  const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ/gviz/tq?tqx=out:json&sheet=DRIs';
+
+  let allRows = [];
+  let activeFilter = 'All';
+
+  const container = document.getElementById('tableContainer');
+  const searchInput = document.getElementById('searchInput');
+  const filtersEl = document.getElementById('filters');
+  const countEl = document.getElementById('count');
+
+  function badgeClass(fn) {
+    const f = (fn || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (f.includes('squid')) return 'badge-squid';
+    if (f.includes('esw')) return 'badge-esw';
+    if (f.includes('spa') || f.includes('app')) return 'badge-spa';
+    if (f === 'ee') return 'badge-ee';
+    if (f.includes('program')) return 'badge-program';
+    return 'badge-default';
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+
+  function render() {
+    const query = searchInput.value.toLowerCase().trim();
+    const filtered = allRows.filter(r => {
+      if (activeFilter !== 'All') {
+        const fn = (r.func || '').toLowerCase();
+        const af = activeFilter.toLowerCase();
+        if (af === 'spa/apps') {
+          if (!fn.includes('spa') && !fn.includes('app')) return false;
+        } else {
+          if (!fn.includes(af)) return false;
+        }
+      }
+      if (query) {
+        const haystack = [r.name, r.func, r.role, r.focus].join(' ').toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    });
+
+    countEl.textContent = `Showing ${filtered.length} of ${allRows.length} DRIs`;
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="no-results">No matching DRIs found.</div>';
+      return;
+    }
+
+    let html = '<table><thead><tr>' +
+      '<th>Name</th><th>Function</th><th>Role</th><th>Focus Area</th>' +
+      '</tr></thead><tbody>';
+
+    filtered.forEach(r => {
+      html += '<tr>' +
+        `<td style="font-weight:500">${escapeHtml(r.name)}</td>` +
+        `<td><span class="badge ${badgeClass(r.func)}">${escapeHtml(r.func)}</span></td>` +
+        `<td>${escapeHtml(r.role)}</td>` +
+        `<td>${escapeHtml(r.focus)}</td>` +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  function parseResponse(text) {
+    // Strip JSONP wrapper: /*O_o*/ google.visualization.Query.setResponse({...});
+    const match = text.match(/google\.visualization\.Query\.setResponse\(({[\s\S]*})\)\s*;?\s*$/);
+    if (!match) throw new Error('Unexpected response format');
+    const json = JSON.parse(match[1]);
+    const cols = json.table.cols.map(c => (c.label || '').trim());
+    const rows = (json.table.rows || []).map(r => {
+      const cells = r.c || [];
+      const val = idx => (cells[idx] && cells[idx].v != null) ? String(cells[idx].v).trim() : '';
+      return {
+        name: val(0),
+        func: val(1),
+        role: val(2),
+        focus: val(3)
+      };
+    }).filter(r => r.name);
+    return rows;
+  }
+
+  function showError(msg) {
+    container.innerHTML =
+      `<div class="error-state">` +
+      `<p>⚠️ ${escapeHtml(msg)}</p>` +
+      `<button class="retry-btn" id="retryBtn">Retry</button>` +
+      `</div>`;
+    document.getElementById('retryBtn').addEventListener('click', fetchData);
+    countEl.textContent = '';
+  }
+
+  function fetchData() {
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading DRI data…</div>';
+    countEl.textContent = '';
+    // Using embedded data (synced from Google Sheet by Goose)
+    allRows = DRI_DATA.map(function(r) {
+      return { name: r['Name']||'', func: r['Function']||'', role: r['Role']||'', focus: r['Focus Area']||'' };
+    }).filter(function(r) { return r.name; });
+    render();
+  }
+
+  // Filter buttons
+  filtersEl.addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    filtersEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    render();
+  });
+
+  // Search
+  searchInput.addEventListener('input', render);
+
+  // Init
+  fetchData();
+})();
+</script>
+</body>
+</html>

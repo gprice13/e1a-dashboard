@@ -3,1915 +3,389 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E1a Solo Station Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>E1a Program Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
---bg:#0f172a;--card:#1e293b;--card-hover:#263548;--text:#e2e8f0;--text-muted:#94a3b8;
---border:#334155;--accent:#3b82f6;--green:#22c55e;--yellow:#eab308;--red:#ef4444;
---gray:#6b7280;--purple:#a855f7;--orange:#f97316;--blue:#3b82f6;
-}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #f1f5f9; color: #1a1a1a; display: flex; flex-direction: column; }
 
-.header{background:#0b1120;border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.header-left{display:flex;flex-direction:column;gap:2px}
-.header-title{font-size:20px;font-weight:700;letter-spacing:-0.3px}
-.header-subtitle{font-size:12px;color:var(--text-muted);font-weight:500}
-.header-right{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-muted)}
-.header-right a{color:var(--accent);text-decoration:none;font-size:12px}
-.header-right a:hover{text-decoration:underline}
-.last-updated{font-size:11px;color:var(--text-muted);white-space:nowrap}
-.refresh-btn{background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;color:#fff;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:600;display:flex;align-items:center;gap:8px;transition:all .2s;box-shadow:0 2px 8px rgba(59,130,246,.3);white-space:nowrap}
-.refresh-btn:hover{background:linear-gradient(135deg,#60a5fa,#3b82f6);box-shadow:0 4px 12px rgba(59,130,246,.4);transform:translateY(-1px)}
-.refresh-btn:active{transform:translateY(0)}
-.refresh-btn.spinning .spin-icon{animation:spin 1s linear infinite}
-.refresh-btn.loading{opacity:.8;pointer-events:none}
-@keyframes spin{to{transform:rotate(360deg)}}
+  .site-header { background: #edf0f4; border-bottom: 1px solid #dde1e7; color: #1e293b; padding: 20px 48px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  .header-icon { font-size: 36px; }
+  .site-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .site-header .tagline { font-size: 12px; color: #64748b; margin-top: 2px; }
 
-.nav{background:#0b1120;border-bottom:1px solid var(--border);display:flex;gap:0;padding:0 24px;flex-shrink:0}
-.nav-tab{padding:10px 20px;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
-.nav-tab:hover{color:var(--text);background:rgba(255,255,255,.03)}
-.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .layout { display: flex; flex: 1; overflow: hidden; }
 
-.main{flex:1;overflow-y:auto;padding:20px 24px}
-.page{display:none}
-.page.active{display:block}
+  .sidebar { width: 260px; min-width: 260px; background: #f9fafb; border-right: 1px solid #e5e7eb; padding: 20px 0 80px 0; display: flex; flex-direction: column; overflow-y: auto; }
+  .sidebar-section { margin-bottom: 14px; }
+  .sidebar-section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; padding: 0 20px; margin-bottom: 4px; }
+  .sidebar a { display: flex; align-items: center; gap: 8px; padding: 5px 20px; font-size: 12px; color: #374151; text-decoration: none; transition: background 0.15s; cursor: pointer; line-height: 1.4; }
+  .sidebar a:hover { background: #e5e7eb; }
+  .sidebar a.active { background: #e0e7ff; color: #4338ca; font-weight: 600; }
+  .sidebar .nav-icon { font-size: 12px; width: 16px; text-align: center; flex-shrink: 0; }
+  .sidebar .nav-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-footer { padding: 12px 20px; font-size: 10px; color: #bbb; border-top: 1px solid #e5e7eb; position: fixed; bottom: 0; width: 260px; background: #f9fafb; }
 
-.loading-container,.error-container{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;gap:16px}
-.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-.error-container{color:var(--red)}
-.error-container p{color:var(--text-muted);font-size:14px;text-align:center;max-width:400px}
-.retry-btn{background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600}
-.retry-btn:hover{opacity:.9}
+  .sidebar-section-title.collapsible { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; }
+  .sidebar-section-title.collapsible:hover { color: #6b7280; }
+  .collapse-arrow { font-size: 10px; transition: transform 0.2s ease; }
+  .collapse-arrow.collapsed { transform: rotate(-90deg); }
+  .collapsible-content { overflow: hidden; transition: max-height 0.25s ease; }
+  .collapsible-content.collapsed { max-height: 0 !important; }
 
-.loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.7);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(2px);transition:opacity .3s}
-.loading-overlay.hidden{opacity:0;pointer-events:none}
-.loading-overlay .spinner{width:48px;height:48px;border-width:4px}
-.loading-overlay .loading-text{font-size:15px;color:var(--text);font-weight:600}
-.loading-overlay .loading-sub{font-size:12px;color:var(--text-muted)}
+  .main-frame { flex: 1; border: none; display: block; }
+  .main-home { flex: 1; padding: 32px 48px; overflow-y: auto; overflow-x: auto; background: #f1f5f9; }
+  .main-home h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .main-home .section-desc { font-size: 13px; color: #888; margin-bottom: 24px; }
 
-/* HOME */
-.home-layout{display:flex;gap:24px}
-.home-main{flex:1;min-width:0}
-.home-sidebar{width:300px;flex-shrink:0}
-.cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-.status-card{border-radius:10px;padding:18px;border-left:4px solid;background:var(--card);transition:transform .15s,box-shadow .15s}
-.status-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
-.status-card .card-section{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;opacity:.7}
-.status-card .card-title{font-size:15px;font-weight:700;margin-bottom:6px}
-.status-card .card-summary{font-size:13px;color:var(--text-muted);line-height:1.5}
-.status-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px}
+  .timeline-embed { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; margin-bottom: 40px; }
+  .timeline-embed iframe { width: 100%; height: 660px; border: none; display: block; }
 
-.sidebar-section{margin-bottom:20px}
-.sidebar-section h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.sidebar-link{display:block;padding:6px 0;text-decoration:none;color:var(--text);font-size:13px;transition:color .2s;position:relative}
-.sidebar-link:hover{color:var(--accent)}
-.sidebar-link .link-desc{display:none;position:absolute;left:0;top:100%;background:#0b1120;border:1px solid var(--border);padding:8px 12px;border-radius:6px;font-size:11px;color:var(--text-muted);z-index:100;width:250px;line-height:1.4;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.4)}
-.sidebar-link:hover .link-desc{display:block}
-.quick-links-panel{background:var(--card);border-radius:10px;padding:18px;border:1px solid var(--border)}
-.quick-links-panel h2{font-size:15px;font-weight:700;margin-bottom:16px}
+  .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .status-card { background: rgba(248,250,252,0.90); border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
+  .status-card .card-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .status-card ul { font-size: 12px; color: #444; padding-left: 16px; margin: 0; line-height: 1.7; }
 
-/* TABLES */
-.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
-.search-input{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:6px;font-size:13px;font-family:inherit;width:280px;transition:border-color .2s}
-.search-input:focus{outline:none;border-color:var(--accent)}
-.search-input::placeholder{color:var(--text-muted)}
-.filter-btn{background:var(--card);border:1px solid var(--border);color:var(--text-muted);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
-.filter-btn:hover{background:var(--card-hover);color:var(--text)}
-.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.summary-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.summary-chip{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;align-items:center;min-width:90px;transition:transform .15s}
-.summary-chip:hover{transform:translateY(-2px)}
-.summary-chip .chip-count{font-size:22px;font-weight:700}
-.summary-chip .chip-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:600;letter-spacing:.3px;margin-top:2px}
-.data-table{width:100%;border-collapse:collapse;font-size:13px}
-.data-table thead th{background:#0b1120;padding:10px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:5;cursor:pointer;user-select:none;white-space:nowrap}
-.data-table thead th:hover{color:var(--text);background:#131d30}
-.data-table thead th .sort-arrow{margin-left:4px;font-size:10px;opacity:.5}
-.data-table thead th.sort-active .sort-arrow{opacity:1;color:var(--accent)}
-.data-table tbody tr{border-bottom:1px solid rgba(51,65,85,.3);transition:background .15s}
-.data-table tbody tr:nth-child(even){background:rgba(30,41,59,.5)}
-.data-table tbody tr:hover{background:rgba(59,130,246,.08)}
-.data-table tbody tr.row-alert{background:rgba(239,68,68,.08)}
-.data-table tbody tr.row-alert:hover{background:rgba(239,68,68,.12)}
-.data-table td{padding:10px 12px;vertical-align:top;line-height:1.4}
-.badge{display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-.badge-green{background:rgba(34,197,94,.15);color:var(--green)}
-.badge-yellow{background:rgba(234,179,8,.15);color:var(--yellow)}
-.badge-red{background:rgba(239,68,68,.15);color:var(--red)}
-.badge-blue{background:rgba(59,130,246,.15);color:var(--blue)}
-.badge-gray{background:rgba(107,114,128,.15);color:var(--gray)}
-.badge-purple{background:rgba(168,85,247,.15);color:var(--purple)}
-.badge-orange{background:rgba(249,115,22,.15);color:var(--orange)}
-.table-scroll{overflow:auto;max-height:calc(100vh - 300px);border-radius:8px;border:1px solid var(--border)}
-
-.fn-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
-.fn-SQUID{background:rgba(59,130,246,.15);color:#60a5fa}
-.fn-ESW{background:rgba(34,197,94,.15);color:#4ade80}
-.fn-SPA{background:rgba(168,85,247,.15);color:#c084fc}
-.fn-EE{background:rgba(249,115,22,.15);color:#fb923c}
-.fn-Program{background:rgba(234,179,8,.15);color:#fbbf24}
-.fn-default{background:rgba(107,114,128,.15);color:#9ca3af}
-
-.no-data{text-align:center;padding:40px;color:var(--text-muted);font-size:14px}
-
-.row-counter{margin-top:12px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
-.row-counter .count-badge{background:var(--card);border:1px solid var(--border);padding:2px 10px;border-radius:4px;font-weight:700;color:var(--accent)}
-
-/* Workstream color stripe for timeline */
-.ws-stripe{display:inline-block;width:4px;height:18px;border-radius:2px;margin-right:8px;vertical-align:middle;flex-shrink:0}
-
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-::-webkit-scrollbar-thumb:hover{background:#475569}
+  .divider { border: none; border-top: 1px solid #eee; margin: 32px 0; }
 </style>
-  <script type="application/ld+json">
-{
-  "@context": "urn:goose.ai:schema",
-  "@type": "GooseApp",
-  "name": "e1a-solo-station-program-hub",
-  "description": "E1a Solo Station Dashboard — program status from Google Sheets with sortable tables",
-  "width": 1440,
-  "height": 900,
-  "resizable": true,
-  "mcpServers": [
-    "apps"
-  ]
-}
-  </script>
-  <script type="application/x-goose-prd">
-Build a program dashboard app called "E1a Solo Station Dashboard" (1440x900) that reads ALL data from a published Google Sheet.
-
-## DATA SOURCE
-Google Sheet ID: 1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ
-
-Fetch data using this URL pattern for each tab:
-https://docs.google.com/spreadsheets/d/1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ/gviz/tq?tqx=out:json&sheet=SHEET_NAME
-
-The response is JSONP — strip the prefix and trailing characters to get JSON. Then parse response.table.cols and response.table.rows. ALL rows must be preserved — only completely empty rows are skipped.
-
-## REFRESH FUNCTIONALITY
-- Prominent "🔄 Refresh Data" button in the header, always visible on every tab
-- Blue gradient button with shadow for high visibility
-- Shows a full-screen loading overlay with spinner while fetching
-- Displays "Last refreshed: [HH:MM:SS]" timestamp next to the button
-- Button shows spinning animation during refresh
-- Prevents double-click during active refresh
-
-## TABS / PAGES (navigation bar at top)
-
-### 1. HOME (default)
-Read from "Status Cards" sheet (columns: Section, Status, Title, Summary).
-- Display as cards in a 2-column grid
-- Card color based on Status column: Green=#22c55e, Yellow=#eab308, Red=#ef4444, Gray=#6b7280
-- Each card shows Section label, Status badge, Title (bold) and Summary text
-- Cards have hover effect (lift + shadow)
-- Row counter at bottom showing total cards loaded
-- RIGHT SIDEBAR: Read from "Quick Links" sheet (columns: Category, Name, URL, Description)
-  - Group links by Category
-  - Each link is clickable, opens in new tab
-  - Show Description as tooltip on hover
-
-### 2. TIMELINE (SORTABLE TABLE — replaces Gantt)
-Read from "Timeline" sheet (columns: Workstream, Milestone, Start Date, End Date, Status, DRI, Notes, Source).
-- **PRIMARY VIEW: Sortable table showing ALL rows** (no Gantt chart)
-- Must display EVERY row from the sheet — no filtering, no truncation
-- Status summary chips at top showing counts per status
-- Filter by Workstream: dynamically generated buttons (All + unique workstreams)
-- Search box to filter across all columns
-- Sortable by clicking any column header (toggle asc/desc)
-- Status column color-coded: Complete=green, In Progress=blue, Open=yellow, Investigating=orange, Blocked=red, Not Started=gray, Planned=purple, Decided=green
-- Workstream column has colored stripe indicator
-- Blocked rows highlighted with subtle red background
-- **Row counter at bottom**: "Rows loaded: N total from sheet | Showing: M"
-- Date columns displayed as-is from the sheet (no date reformatting)
-
-### 3. DRIs
-Read from "DRIs" sheet (columns: Name, Function, Role, Focus Area, Slack Handle, Email).
-- Searchable/filterable sortable table
-- Search box with 🔍 icon that filters across all columns
-- Filter buttons by Function (dynamically generated): All + unique functions
-- Sortable by clicking column headers
-- Function column has colored badges (SQUID=blue, ESW=green, SPA=purple, EE=orange, Program=yellow)
-- Row counter at bottom
-- "No matching DRIs found" message when filters return empty
-
-### 4. DECISIONS
-Read from "Decisions" sheet (columns: #, Decision, Status, DRI, Date Opened, Date Decided, Impact Area, Notes).
-- Summary bar at top: count of each status
-- Filterable by Status (buttons)
-- Searchable with 🔍 icon
-- Sortable by clicking column headers
-- Table with status badges: Decided=green, Open=yellow, Blocked=red, In Progress=blue, At Risk=red, Deferred=gray, Planned=purple, Investigating=orange
-- Highlight rows where Status is "Blocked" or "At Risk" with subtle red background
-- Row counter at bottom
-- "No matching decisions found" message when filters return empty
-
-### 5. DEPENDENCIES
-Read from "Dependencies" sheet (columns: #, From, To, Dependency, Type, Status, Risk Level, DRI, Notes).
-- Summary cards at top: count by Risk Level (High, Medium, Low)
-- Filter by Type (dynamically generated): All + unique types
-- Filter by Risk Level: All, High, Medium, Low
-- Sortable by clicking column headers
-- Table with risk level badges: High=red, Medium=yellow, Low=green
-- Highlight high-risk rows with subtle red background
-- Row counter at bottom
-- "No matching dependencies found" message when filters return empty
-
-## DATA INTEGRITY
-- ALL rows from every sheet must be displayed — no data dropped
-- Row counters on every tab to verify data completeness
-- Console logging of row counts per sheet for debugging
-- Only completely empty rows (no values in any column) are skipped
-- Promise.allSettled ensures individual tab errors don't block other tabs
-
-## ERROR HANDLING
-- If any sheet fails to load, show a friendly error message with ⚠️ icon on that specific tab
-- Error message includes description of what went wrong
-- "🔄 Retry" button on each error state
-- Individual tab errors don't block other tabs from loading
-- Console warnings for failed sheet fetches
-
-## DESIGN
-- Dark theme (#0f172a background, #1e293b cards, #e2e8f0 text)
-- Clean, modern, professional
-- Inter font from Google Fonts
-- Navigation: horizontal tab bar at top with active tab indicator (blue underline)
-- Full-screen loading overlay with backdrop blur during refresh
-- All tables are sortable with visual sort indicators (arrows)
-- Custom scrollbar styling
-- All data comes from the sheet — NO hardcoded data
-
-## HEADER
-- Title: "E1a Solo Station Dashboard"
-- Subtitle: "Program Status — Architecture Phase"
-- Right side: Last refreshed timestamp, "📊 Google Sheet ↗" link, prominent blue "🔄 Refresh Data" button
-  </script>
 </head>
 <body>
 
-<div class="loading-overlay hidden" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div class="loading-text">Refreshing Dashboard Data</div>
-  <div class="loading-sub" id="loadingStatus">Fetching from Google Sheets…</div>
-</div>
-
-<div class="header">
-  <div class="header-left">
-    <div class="header-title">E1a Solo Station Dashboard</div>
-    <div class="header-subtitle">Program Status — Architecture Phase</div>
-  </div>
-  <div class="header-right">
-    <span class="last-updated" id="lastUpdated">Last refreshed: —</span>
-    <a href="https://docs.google.com/spreadsheets/d/1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ" target="_blank">📊 Google Sheet ↗</a>
-    <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
-      <span class="spin-icon" style="display:inline-block;font-size:16px">🔄</span> Refresh Data
-    </button>
+<div class="site-header">
+  <span class="header-icon">🔲</span>
+  <div>
+    <h1>E1a Solo Station Dashboard</h1>
+    <div class="tagline">SW Program Intelligence for E1a · <span style="color:#6366f1; font-weight:600;">go/e1adash</span> · Architecture Phase</div>
   </div>
 </div>
 
-<div class="nav" id="navBar">
-  <div class="nav-tab active" data-tab="home">Home</div>
-  <div class="nav-tab" data-tab="timeline">Timeline</div>
-  <div class="nav-tab" data-tab="dris">DRIs</div>
-  <div class="nav-tab" data-tab="decisions">Decisions</div>
-  <div class="nav-tab" data-tab="dependencies">Dependencies</div>
-</div>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Navigation</div>
+      <a onclick="showHome()" id="nav-home" class="active">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a onclick="loadPage('decisions.html', this)">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Decisions Tracker</span>
+      </a>
+      <a onclick="loadPage('dri.html', this)">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Program DRIs</span>
+      </a>
+      <a onclick="loadPage('dependencies.html', this)">
+        <span class="nav-icon">🔗</span>
+        <span class="nav-label">Dependencies</span>
+      </a>
+    </div>
 
-<div class="main">
-  <div class="page active" id="page-home"></div>
-  <div class="page" id="page-timeline"></div>
-  <div class="page" id="page-dris"></div>
-  <div class="page" id="page-decisions"></div>
-  <div class="page" id="page-dependencies"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title collapsible" onclick="toggleSection(this)">Core Documents <span class="collapse-arrow">▾</span></div>
+      <div class="collapsible-content">
+        <a href="https://docs.google.com/document/d/1I-VJ6ziO8rPF3-vLu28HkmUZl3OzvLuREsoiQyjsyDk/edit" target="_blank">
+          <span class="nav-icon">📝</span>
+          <span class="nav-label">Core Meeting Notes ↗</span>
+        </a>
+        <a href="https://docs.google.com/document/d/1xzIUQ8pBkIpKzj2O-LtqpEj65o-6_-GQBmAKntLI4wg/edit" target="_blank">
+          <span class="nav-icon">📄</span>
+          <span class="nav-label">E1a PRD (go/e1aprd) ↗</span>
+        </a>
+        <a href="https://docs.google.com/document/d/1u2h2ZMLgpjANZlfn2Zm-TECeHHzfBIztMcrwWNJ9sHw/edit" target="_blank">
+          <span class="nav-icon">🏗️</span>
+          <span class="nav-label">Architecture Work Notes ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ/edit" target="_blank">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Dashboard Data Sheet ↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title collapsible" onclick="toggleSection(this)">Engineering Trackers <span class="collapse-arrow">▾</span></div>
+      <div class="collapsible-content">
+        <a href="https://docs.google.com/spreadsheets/d/1P9Sq92wFLQfC4xrYR85MrByTpfVA3wybZEBd2Dwy4PM/edit" target="_blank">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">Decisions (go/e1aprogramdecisions) ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1rLfSuLZFw7fLiSV10QlR4Ikl8x31h7CIJHSvs-0YujA/edit" target="_blank">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">EE Open Decisions (go/e1aeeopens) ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1ck77E-dnD70bAkZFc-qAmZdhMhpck0c00aDzqnIXkfs/edit" target="_blank">
+          <span class="nav-icon">📅</span>
+          <span class="nav-label">EE Release Schedule ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/15C5IZn9Scuh-_X9nLcsYcdUKGL3l7kLkklUQRO2Wqu8/edit" target="_blank">
+          <span class="nav-icon">🔌</span>
+          <span class="nav-label">SPE Changes (go/e1aspechanges) ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1O35qVT99davzGTmfyCQ0e_6wHB7PdNH6qXBtas8Xmh8/edit" target="_blank">
+          <span class="nav-icon">🔩</span>
+          <span class="nav-label">MLB Changes (go/e1amlbchanges) ↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title collapsible" onclick="toggleSection(this)">Engineering Notes <span class="collapse-arrow">▾</span></div>
+      <div class="collapsible-content">
+        <a href="https://docs.google.com/document/d/1yJ71phjiv_--84oOYIoRodvRSWxEGRyTSNG9zroEVmY/edit" target="_blank">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">EE Standup Notes ↗</span>
+        </a>
+        <a href="https://docs.google.com/document/d/1jqGy4Oba3XGfwIe_WtBHaeNr1VcGlJGPkNlXwofSrdA/edit" target="_blank">
+          <span class="nav-icon">🔋</span>
+          <span class="nav-label">PD Notes ↗</span>
+        </a>
+        <a href="https://docs.google.com/document/d/1sy6dfyiTfmTWJiSiyHakIQtwWh1GXGW5G_y0oVj6qZc/edit" target="_blank">
+          <span class="nav-icon">🔌</span>
+          <span class="nav-label">Hub/Power Whiteboard ↗</span>
+        </a>
+        <a href="https://docs.google.com/document/d/1AmyFNleI4JMxvcLAjnlaQbavMB_HaFqEo0cj5voiQcI/edit" target="_blank">
+          <span class="nav-icon">💳</span>
+          <span class="nav-label">SPE Dual Magstripe ↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title collapsible" onclick="toggleSection(this)">EE Reference <span class="collapse-arrow">▾</span></div>
+      <div class="collapsible-content">
+        <a href="https://docs.google.com/spreadsheets/d/15L3AsSlcakvipEx_eT1HNxQYhP4s9s7sQpbafVY7lcE/edit" target="_blank">
+          <span class="nav-icon">🔋</span>
+          <span class="nav-label">Power Budgeting ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1wxYA1ATU6lOctG07KnojybMrxSAWTLaziFg4bSM7ruI/edit" target="_blank">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-label">PD Investigations ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1KsfFVFvaR8fPx7ftUpxOwWcEfXm5nFH3TyCvYanh-yg/edit" target="_blank">
+          <span class="nav-icon">🧮</span>
+          <span class="nav-label">EE Calcs (go/e1aeecalcs) ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1WZPakLdz1M5cC217EnolBDLEh0xRsgyfcNp8bhE3cZM/edit" target="_blank">
+          <span class="nav-icon">🔗</span>
+          <span class="nav-label">Connector Pinouts ↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1xjOHHKbsA6t1EsIdFg_6mXRNQ44cr6N7SyimU9myrV0/edit" target="_blank">
+          <span class="nav-icon">📐</span>
+          <span class="nav-label">QCS6490 Pinout ↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title collapsible" onclick="toggleSection(this)">Slack Channels <span class="collapse-arrow">▾</span></div>
+      <div class="collapsible-content">
+        <a href="https://sq-block.slack.com/archives/C0A9Y4806Q3" target="_blank">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">#e1a-core ↗</span>
+        </a>
+        <a href="https://sq-block.slack.com/archives/C0ALYKPEZ8A" target="_blank">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">#e1a-ee ↗</span>
+        </a>
+        <a href="https://sq-block.slack.com/archives/C0AND4DS0CX" target="_blank">
+          <span class="nav-icon">🔐</span>
+          <span class="nav-label">#e1a-mpoc-pin ↗</span>
+        </a>
+        <a href="https://sq-block.slack.com/archives/C0AKBMZFTPZ" target="_blank">
+          <span class="nav-icon">🖥️</span>
+          <span class="nav-label">#e1a-display ↗</span>
+        </a>
+        <a href="https://sq-block.slack.com/archives/C01NWGGJHM3" target="_blank">
+          <span class="nav-icon">🦑</span>
+          <span class="nav-label">#squid-dev ↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">JIRA</div>
+      <a href="https://block.atlassian.net/browse/EE-7360" target="_blank">
+        <span class="nav-icon">🎫</span>
+        <span class="nav-label">EE-7360: PD Controller ↗</span>
+      </a>
+      <a href="https://block.atlassian.net/browse/EE-7361" target="_blank">
+        <span class="nav-icon">🎫</span>
+        <span class="nav-label">EE-7361: COTS Hub ↗</span>
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      Maintained by Gregory Price · Generated with 🪿 Goose AI
+    </div>
+  </nav>
+
+  <div class="main-home" id="home-content">
+    <h2>Program Timeline</h2>
+    <p class="section-desc">February 2026 – April 2027 · Hover over milestones for details · <a href="#" onclick="loadPage('decisions.html', document.querySelector('[onclick*=&quot;decisions.html&quot;]')); return false;" style="color:#6366f1;">View decisions →</a> · <a href="#" onclick="loadPage('dependencies.html', document.querySelector('[onclick*=&quot;dependencies.html&quot;]')); return false;" style="color:#6366f1;">View dependencies →</a></p>
+    <div class="timeline-embed">
+      <iframe src="timeline.html" title="E1a Program Timeline"></iframe>
+    </div>
+
+    <div style="margin-bottom:36px;">
+      <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:4px; flex-wrap:wrap;">
+        <h2 style="margin-bottom:0;">Program Status</h2>
+        <span style="font-size:10px; color:#d97706; font-weight:600; background:#fef3c7; padding:2px 8px; border-radius:4px;">Architecture Phase</span>
+        <span style="font-size:11px; color:#6366f1; font-weight:600; background:#eef2ff; padding:2px 8px; border-radius:4px;">Alpha Target: Q4 2026</span>
+      </div>
+      <p class="section-desc" style="margin-bottom:16px;">
+        Data sourced from <a href="https://docs.google.com/spreadsheets/d/1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ/edit" target="_blank" style="color:#6366f1;">E1a Dashboard Sheet</a> · Slack channels · Meeting notes
+      </p>
+
+      <div class="status-grid" id="statusGrid">
+        <div style="text-align:center;padding:40px;color:#9ca3af;grid-column:1/-1;">Loading status cards...</div>
+      </div>
+    </div>
+  </div>
+
+  <iframe class="main-frame" id="page-frame" style="display:none;"></iframe>
 </div>
 
 <script>
-var SHEET_URL = 'https://docs.google.com/spreadsheets/d/1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ/edit';
+var STATUS_CARDS_DATA = [
+  {
+    "Section": "Program",
+    "Status": "Yellow",
+    "Title": "Architecture Phase",
+    "Summary": "Pre-dev-build planning underway. Alpha target Q4. Schedule v1 drafted (ambitious). ID/UX models under review."
+  },
+  {
+    "Section": "SQUID",
+    "Status": "Yellow",
+    "Title": "Platform Readiness",
+    "Summary": "Franken-proto bring-up in progress (Charles Guan). Board ID exhaustion needs resolution. USB PD eval ongoing. MLB fork blocked on X2c memory qual."
+  },
+  {
+    "Section": "ESW",
+    "Status": "Green",
+    "Title": "Embedded SW",
+    "Summary": "ESW engaged since Mar 11. SPE MCO reuse decided. NFC Path 2 confirmed. Ben Brown investigating VDDP. SPE firmware for franken-proto not yet started."
+  },
+  {
+    "Section": "SPA/Apps",
+    "Status": "Gray",
+    "Title": "Apps (Watch)",
+    "Summary": "Early stage. OOBE scoping planned Q2 after K1 Alpha. superPOS integration TBD. Check reopen without Stand flagged as open item. No DRI assigned yet."
+  },
+  {
+    "Section": "HW-SW",
+    "Status": "Yellow",
+    "Title": "Cross-Team Dependencies",
+    "Summary": "10 active dependencies tracked. 2 high-risk: X2c memory qual (gates MLB fork) and Board ID exhaustion. NFC and PD controller decisions in progress."
+  },
+  {
+    "Section": "Risks",
+    "Status": "Yellow",
+    "Title": "Key Risks",
+    "Summary": "Board ID exhaustion (no plan yet). X2c memory qual timeline unknown. ES1 deprecation Aug 21 (logging gap). SPA bandwidth dependent on K1 Alpha."
+  }
+];
 
-var SHEETS = {
-  statusCards: 'Status Cards',
-  quickLinks: 'Quick Links',
-  timeline: 'Timeline',
-  dris: 'DRIs',
-  decisions: 'Decisions',
-  dependencies: 'Dependencies'
-};
-
-// ===== EMBEDDED DATA (from Google Sheet -- last synced Apr 14, 2026 03:33 PM) =====
-var EMBEDDED_DATA = {
-  "statusCards": [
-    {
-      "Section": "Program",
-      "Status": "Yellow",
-      "Title": "Architecture Phase",
-      "Summary": "Pre-dev-build planning underway. Alpha target Q4. Schedule v1 drafted (ambitious). ID/UX models under review."
-    },
-    {
-      "Section": "SQUID",
-      "Status": "Yellow",
-      "Title": "Platform Readiness",
-      "Summary": "Franken-proto bring-up in progress (Charles Guan). Board ID exhaustion needs resolution. USB PD eval ongoing. MLB fork blocked on X2c memory qual."
-    },
-    {
-      "Section": "ESW",
-      "Status": "Green",
-      "Title": "Embedded SW",
-      "Summary": "ESW engaged since Mar 11. SPE MCO reuse decided. NFC Path 2 confirmed. Ben Brown investigating VDDP. SPE firmware for franken-proto not yet started."
-    },
-    {
-      "Section": "SPA/Apps",
-      "Status": "Gray",
-      "Title": "Apps (Watch)",
-      "Summary": "Early stage. OOBE scoping planned Q2 after K1 Alpha. superPOS integration TBD. Check reopen without Stand flagged as open item. No DRI assigned yet."
-    },
-    {
-      "Section": "HW\u2194SW",
-      "Status": "Yellow",
-      "Title": "Cross-Team Dependencies",
-      "Summary": "10 active dependencies tracked. 2 high-risk: X2c memory qual (gates MLB fork) and Board ID exhaustion. NFC and PD controller decisions in progress."
-    },
-    {
-      "Section": "Risks",
-      "Status": "Yellow",
-      "Title": "Key Risks",
-      "Summary": "Board ID exhaustion (no plan yet). X2c memory qual timeline unknown. ES1 deprecation Aug 21 (logging gap). SPA bandwidth dependent on K1 Alpha."
-    }
-  ],
-  "quickLinks": [
-    {
-      "Category": "Core",
-      "Name": "[E1a] Core Meeting Notes",
-      "URL": "https://docs.google.com/document/d/1I-VJ6ziO8rPF3-vLu28HkmUZl3OzvLuREsoiQyjsyDk/edit",
-      "Description": "Cross-functional meeting notes"
-    },
-    {
-      "Category": "Core",
-      "Name": "E1a PRD (go/e1aprd)",
-      "URL": "https://docs.google.com/document/d/1xzIUQ8pBkIpKzj2O-LtqpEj65o-6_-GQBmAKntLI4wg/edit",
-      "Description": "Product requirements"
-    },
-    {
-      "Category": "Core",
-      "Name": "E1a Architecture Work Notes",
-      "URL": "https://docs.google.com/document/d/1u2h2ZMLgpjANZlfn2Zm-TECeHHzfBIztMcrwWNJ9sHw/edit",
-      "Description": "Architecture decisions and notes"
-    },
-    {
-      "Category": "Tracker",
-      "Name": "Engineering Decisions (go/e1aprogramdecisions)",
-      "URL": "https://docs.google.com/spreadsheets/d/1P9Sq92wFLQfC4xrYR85MrByTpfVA3wybZEBd2Dwy4PM/edit",
-      "Description": "All engineering decisions"
-    },
-    {
-      "Category": "Tracker",
-      "Name": "EE Open Decisions (go/e1aeeopens)",
-      "URL": "https://docs.google.com/spreadsheets/d/1rLfSuLZFw7fLiSV10QlR4Ikl8x31h7CIJHSvs-0YujA/edit",
-      "Description": "EE-specific open items"
-    },
-    {
-      "Category": "Tracker",
-      "Name": "EE Release Schedule (go/e1aeereleasedates)",
-      "URL": "https://docs.google.com/spreadsheets/d/1ck77E-dnD70bAkZFc-qAmZdhMhpck0c00aDzqnIXkfs/edit",
-      "Description": "HW milestone dates"
-    },
-    {
-      "Category": "Tracker",
-      "Name": "SPE Changes (go/e1aspechanges)",
-      "URL": "https://docs.google.com/spreadsheets/d/15C5IZn9Scuh-_X9nLcsYcdUKGL3l7kLkklUQRO2Wqu8/edit",
-      "Description": "SPE board changes"
-    },
-    {
-      "Category": "Tracker",
-      "Name": "MLB Changes (go/e1amlbchanges)",
-      "URL": "https://docs.google.com/spreadsheets/d/1O35qVT99davzGTmfyCQ0e_6wHB7PdNH6qXBtas8Xmh8/edit",
-      "Description": "MLB board changes"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a EE Standup Notes (go/e1aeenotes)",
-      "URL": "https://docs.google.com/document/d/1yJ71phjiv_--84oOYIoRodvRSWxEGRyTSNG9zroEVmY/edit",
-      "Description": "EE daily standup notes"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a PD Notes",
-      "URL": "https://docs.google.com/document/d/1jqGy4Oba3XGfwIe_WtBHaeNr1VcGlJGPkNlXwofSrdA/edit",
-      "Description": "Power delivery notes"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a Hub/Power Whiteboard",
-      "URL": "https://docs.google.com/document/d/1sy6dfyiTfmTWJiSiyHakIQtwWh1GXGW5G_y0oVj6qZc/edit",
-      "Description": "Hub and power architecture"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a Power Budgeting",
-      "URL": "https://docs.google.com/spreadsheets/d/15L3AsSlcakvipEx_eT1HNxQYhP4s9s7sQpbafVY7lcE/edit",
-      "Description": "Power budget spreadsheet"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a PD Investigations",
-      "URL": "https://docs.google.com/spreadsheets/d/1wxYA1ATU6lOctG07KnojybMrxSAWTLaziFg4bSM7ruI/edit",
-      "Description": "PD controller eval data"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a EE Calcs (go/e1aeecalcs)",
-      "URL": "https://docs.google.com/spreadsheets/d/1KsfFVFvaR8fPx7ftUpxOwWcEfXm5nFH3TyCvYanh-yg/edit",
-      "Description": "EE calculations"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a Connector Pinouts (go/e1aconnectors)",
-      "URL": "https://docs.google.com/spreadsheets/d/1WZPakLdz1M5cC217EnolBDLEh0xRsgyfcNp8bhE3cZM/edit",
-      "Description": "Connector pin assignments"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a QCS6490 Pinout (go/e1a6490io)",
-      "URL": "https://docs.google.com/spreadsheets/d/1xjOHHKbsA6t1EsIdFg_6mXRNQ44cr6N7SyimU9myrV0/edit",
-      "Description": "SoC pinout mapping"
-    },
-    {
-      "Category": "Engineering",
-      "Name": "E1a SPE Dual Magstripe",
-      "URL": "https://docs.google.com/document/d/1AmyFNleI4JMxvcLAjnlaQbavMB_HaFqEo0cj5voiQcI/edit",
-      "Description": "SPE magstripe implementation notes"
-    },
-    {
-      "Category": "Slack",
-      "Name": "#e1a-core",
-      "URL": "https://sq-block.slack.com/archives/C0A9Y4806Q3",
-      "Description": "Cross-functional architecture"
-    },
-    {
-      "Category": "Slack",
-      "Name": "#e1a-ee",
-      "URL": "https://sq-block.slack.com/archives/C0ALYKPEZ8A",
-      "Description": "EE-specific discussions"
-    },
-    {
-      "Category": "Slack",
-      "Name": "#e1a-mpoc-pin",
-      "URL": "https://sq-block.slack.com/archives/C0AND4DS0CX",
-      "Description": "MPoC / PIN architecture"
-    },
-    {
-      "Category": "Slack",
-      "Name": "#e1a-display",
-      "URL": "https://sq-block.slack.com/archives/C0AKBMZFTPZ",
-      "Description": "Display decisions"
-    },
-    {
-      "Category": "Slack",
-      "Name": "#squid-dev",
-      "URL": "https://sq-block.slack.com/archives/C01NWGGJHM3",
-      "Description": "SQUID team"
-    },
-    {
-      "Category": "JIRA",
-      "Name": "EE-7360: PD Controller",
-      "URL": "https://block.atlassian.net/browse/EE-7360",
-      "Description": "PD controller selection"
-    },
-    {
-      "Category": "JIRA",
-      "Name": "EE-7361: COTS Hub",
-      "URL": "https://block.atlassian.net/browse/EE-7361",
-      "Description": "COTS hub support"
-    }
-  ],
-  "timeline": [
-    {
-      "Workstream": "Program",
-      "Milestone": "E1a Kickoff",
-      "Start Date": "2026-03-11",
-      "End Date": "2026-03-16",
-      "Status": "Complete",
-      "DRI": "Alice Yen / Vani Viswanathan",
-      "Notes": "PRD shared, first core meeting",
-      "Source": "Slack #e1a-core 3/11"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "Architecture Phase",
-      "Start Date": "2026-03-16",
-      "End Date": "2026-09-25",
-      "Status": "In Progress",
-      "DRI": "Vani Viswanathan",
-      "Notes": "Core meetings weekly, key decisions in flight",
-      "Source": "E1a Core Meeting Notes"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "Design Lock (Mock-up/Proto)",
-      "Start Date": "2026-05-07",
-      "End Date": "2026-05-07",
-      "Status": "Not Started",
-      "DRI": "Vani Viswanathan / Luxshare",
-      "Notes": "Luxshare milestone",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "Proto Samples Shipment",
-      "Start Date": "2026-06-29",
-      "End Date": "2026-06-29",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "From Luxshare schedule",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "OK2Tool EVT",
-      "Start Date": "2026-07-09",
-      "End Date": "2026-07-09",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "From Luxshare schedule",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "OK2Fab EVT",
-      "Start Date": "2026-07-22",
-      "End Date": "2026-07-22",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "From Luxshare schedule",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "EVT Units Shipment",
-      "Start Date": "2026-09-04",
-      "End Date": "2026-09-04",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "From Luxshare schedule",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "Alpha",
-      "Start Date": "2026-10-01",
-      "End Date": "2026-12-31",
-      "Status": "Not Started",
-      "DRI": "Vani Viswanathan",
-      "Notes": "Q4 target per go/e1adash",
-      "Source": "Alice Yen Slack 4/9"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "Tooling Mod for DVT",
-      "Start Date": "2026-11-26",
-      "End Date": "2026-11-26",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "From Luxshare schedule",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "DVT Units Shipment",
-      "Start Date": "2026-12-31",
-      "End Date": "2026-12-31",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "From Luxshare schedule",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "Line Transfer (Dongguan to Vietnam)",
-      "Start Date": "2026-12-31",
-      "End Date": "2027-01-28",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "Transit period",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "Vietnam Line Ready",
-      "Start Date": "2027-02-24",
-      "End Date": "2027-02-24",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "Factory ready in Vietnam",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "Program",
-      "Milestone": "PVT/MP Units Shipment",
-      "Start Date": "2027-03-09",
-      "End Date": "2027-03-09",
-      "Status": "Not Started",
-      "DRI": "Luxshare",
-      "Notes": "From Luxshare schedule",
-      "Source": "Jaime Frias Slack 4/8"
-    },
-    {
-      "Workstream": "SQUID",
-      "Milestone": "Board ID / CDT Decision",
-      "Start Date": "2026-04-09",
-      "End Date": "2026-04-30",
-      "Status": "Open",
-      "DRI": "Zac Crosby",
-      "Notes": "Almost out of HW product IDs - CDT vs HW-based",
-      "Source": "Slack #e1a-core 4/9"
-    },
-    {
-      "Workstream": "SQUID",
-      "Milestone": "Franken-Proto Bring-up",
-      "Start Date": "2026-03-15",
-      "End Date": "2026-05-15",
-      "Status": "In Progress",
-      "DRI": "Charles Guan",
-      "Notes": "K1a MLB + STUSB4531 PD controller, device tree",
-      "Source": "Slack #squid-dev"
-    },
-    {
-      "Workstream": "SQUID",
-      "Milestone": "USB PD Controller Eval",
-      "Start Date": "2026-03-01",
-      "End Date": "2026-05-30",
-      "Status": "In Progress",
-      "DRI": "Charles Guan",
-      "Notes": "MPS vs Maxim evaluation on eval kit",
-      "Source": "Slack #e1a-ee"
-    },
-    {
-      "Workstream": "SQUID",
-      "Milestone": "X2c MLB Fork",
-      "Start Date": "2026-06-01",
-      "End Date": "2026-07-31",
-      "Status": "Blocked",
-      "DRI": "Cory Douthat",
-      "Notes": "Blocked on X2c discrete memory qual",
-      "Source": "E1a Core Meeting Notes"
-    },
-    {
-      "Workstream": "SQUID",
-      "Milestone": "Pre-Dev Build SW Ready",
-      "Start Date": "2026-06-01",
-      "End Date": "2026-08-31",
-      "Status": "Not Started",
-      "DRI": "Zac Crosby",
-      "Notes": "Build strategy for multiple HW targets TBD",
-      "Source": ""
-    },
-    {
-      "Workstream": "ESW",
-      "Milestone": "ESW Engagement Kickoff",
-      "Start Date": "2026-03-11",
-      "End Date": "2026-03-31",
-      "Status": "Complete",
-      "DRI": "Derek Timmerman",
-      "Notes": "Introduced ESW to E1a",
-      "Source": "Derek Slack 3/11"
-    },
-    {
-      "Workstream": "ESW",
-      "Milestone": "SPE MCO Reuse Validation",
-      "Start Date": "2026-04-01",
-      "End Date": "2026-06-30",
-      "Status": "In Progress",
-      "DRI": "Ben Brown",
-      "Notes": "Leveraging K1 SPE MCO for E1a",
-      "Source": "E1a Core Meeting 4/1"
-    },
-    {
-      "Workstream": "ESW",
-      "Milestone": "NFC Architecture Confirmation",
-      "Start Date": "2026-03-15",
-      "End Date": "2026-04-15",
-      "Status": "In Progress",
-      "DRI": "John Reimers / Ben Brown",
-      "Notes": "Path 2 decided; ID confirming concept direction and coil size by 4/15",
-      "Source": "Vani Slack 4/1"
-    },
-    {
-      "Workstream": "ESW",
-      "Milestone": "NFC Coil Prototyping (Amphenol)",
-      "Start Date": "2026-05-01",
-      "End Date": "2026-06-29",
-      "Status": "Not Started",
-      "DRI": "John Reimers / Emad Bidari",
-      "Notes": "Engage Amphenol early May, proto modules before proto samples",
-      "Source": "Vani Slack 3/31"
-    },
-    {
-      "Workstream": "ESW",
-      "Milestone": "NFC VDDP Investigation",
-      "Start Date": "2026-03-20",
-      "End Date": "2026-05-15",
-      "Status": "Investigating",
-      "DRI": "Ben Brown",
-      "Notes": "X2c bug - retry configurable per-product for E1a",
-      "Source": "Slack #x2c-ee"
-    },
-    {
-      "Workstream": "ESW",
-      "Milestone": "SPE Firmware for Franken-Proto",
-      "Start Date": "2026-05-01",
-      "End Date": "2026-07-31",
-      "Status": "Not Started",
-      "DRI": "Ben Brown",
-      "Notes": "Depends on franken-proto HW availability",
-      "Source": ""
-    },
-    {
-      "Workstream": "ESW",
-      "Milestone": "Payment Cert Planning",
-      "Start Date": "2026-06-01",
-      "End Date": "2026-09-30",
-      "Status": "Not Started",
-      "DRI": "Ben Brown",
-      "Notes": "Cert timeline TBD",
-      "Source": ""
-    },
-    {
-      "Workstream": "SPA/Apps",
-      "Milestone": "OOBE / Tap-to-Set-Up Scoping",
-      "Start Date": "2026-04-01",
-      "End Date": "2026-06-30",
-      "Status": "Planned",
-      "DRI": "John Koryfidis",
-      "Notes": "SPA bandwidth after K1 Alpha - Q2",
-      "Source": "Slack #tap-to-set-up 2/4"
-    },
-    {
-      "Workstream": "SPA/Apps",
-      "Milestone": "superPOS Integration Planning",
-      "Start Date": "2026-07-01",
-      "End Date": "2026-09-30",
-      "Status": "Not Started",
-      "DRI": "Justin Chan",
-      "Notes": "E1a rides superPOS golden path",
-      "Source": "Slack #ask-squid-dev 3/3"
-    },
-    {
-      "Workstream": "SPA/Apps",
-      "Milestone": "Check Reopen Without Stand",
-      "Start Date": "2026-04-01",
-      "End Date": "2026-09-30",
-      "Status": "Open",
-      "DRI": "TBD",
-      "Notes": "James Schonzeit: E1a is forcing function",
-      "Source": "Slack #sq-cr-giant-leap"
-    },
-    {
-      "Workstream": "EE Dependency",
-      "Milestone": "ID/UX Model Review",
-      "Start Date": "2026-03-15",
-      "End Date": "2026-04-15",
-      "Status": "In Progress",
-      "DRI": "Miguel Harry",
-      "Notes": "Models arrived SEA office Apr 6, internal study Apr 8",
-      "Source": "Slack #e1a-core 4/6"
-    },
-    {
-      "Workstream": "EE Dependency",
-      "Milestone": "NFC Coil Design and Downselection",
-      "Start Date": "2026-03-15",
-      "End Date": "2026-05-15",
-      "Status": "In Progress",
-      "DRI": "Tom Buttner / Emad Bidari",
-      "Notes": "Depends on ID confirming concept direction",
-      "Source": "Vani Slack 3/31"
-    },
-    {
-      "Workstream": "EE Dependency",
-      "Milestone": "PD Controller Selection",
-      "Start Date": "2026-02-01",
-      "End Date": "2026-05-30",
-      "Status": "In Progress",
-      "DRI": "Tom Buttner / RaeAnne Dietz",
-      "Notes": "EE-7360 - MPS vs Maxim",
-      "Source": "JIRA EE-7360"
-    },
-    {
-      "Workstream": "EE Dependency",
-      "Milestone": "X2c Memory Qual",
-      "Start Date": "2026-03-01",
-      "End Date": "2026-06-30",
-      "Status": "In Progress",
-      "DRI": "Cory Douthat",
-      "Notes": "Gates MLB fork for E1a",
-      "Source": "E1a Core Meeting Notes"
-    },
-    {
-      "Workstream": "EE Dependency",
-      "Milestone": "Hub (H6) Design - Luxshare",
-      "Start Date": "2026-03-25",
-      "End Date": "2026-06-30",
-      "Status": "In Progress",
-      "DRI": "Jaime Frias / Alice Yen",
-      "Notes": "H52 with CMF changes + new regulator, RFQ in progress",
-      "Source": "Alice Yen Slack 3/25"
-    },
-    {
-      "Workstream": "EE Dependency",
-      "Milestone": "No Built-in Swipe Decision",
-      "Start Date": "2026-04-14",
-      "End Date": "2026-04-14",
-      "Status": "Decided",
-      "DRI": "Alice Yen",
-      "Notes": "R42 USB-C accessory instead - PRD updated",
-      "Source": "Alice Yen Slack 4/14"
-    }
-  ],
-  "dris": [
-    {
-      "Name": "Zac Crosby",
-      "Function": "SQUID",
-      "Role": "Platform Lead",
-      "Focus Area": "USB PD, Board IDs, CDT, Pre-dev-build"
-    },
-    {
-      "Name": "Charles Guan",
-      "Function": "SQUID",
-      "Role": "SW Engineer",
-      "Focus Area": "Device tree, Franken-proto bring-up"
-    },
-    {
-      "Name": "Cory Douthat",
-      "Function": "SQUID",
-      "Role": "SW Engineer",
-      "Focus Area": "Discrete memory layout, X2c to E1a MLB fork"
-    },
-    {
-      "Name": "Justin Chan",
-      "Function": "SQUID",
-      "Role": "SW Engineer",
-      "Focus Area": "superPOS, Build/release train"
-    },
-    {
-      "Name": "Edmond Gagnon",
-      "Function": "SQUID",
-      "Role": "SW Engineer",
-      "Focus Area": "Remote device access tools"
-    },
-    {
-      "Name": "Ben Brown",
-      "Function": "ESW",
-      "Role": "Firmware Engineer",
-      "Focus Area": "SPE firmware, NFC, Cert, Payment architecture"
-    },
-    {
-      "Name": "Christopher C",
-      "Function": "ESW",
-      "Role": "Firmware Engineer",
-      "Focus Area": "TBD - newly assigned to E1a"
-    },
-    {
-      "Name": "Derek Timmerman",
-      "Function": "ESW",
-      "Role": "Manager",
-      "Focus Area": "ESW program oversight"
-    },
-    {
-      "Name": "John Koryfidis",
-      "Function": "SPA/Apps",
-      "Role": "SPA Lead",
-      "Focus Area": "OOBE / Tap-to-Set-Up"
-    },
-    {
-      "Name": "James Schonzeit",
-      "Function": "SPA/Apps",
-      "Role": "Product",
-      "Focus Area": "Check reopen without Stand"
-    },
-    {
-      "Name": "Tom Buttner",
-      "Function": "EE",
-      "Role": "EE Lead",
-      "Focus Area": "Architecture, NFC, PD controller, Hub"
-    },
-    {
-      "Name": "RaeAnne Dietz",
-      "Function": "EE",
-      "Role": "EE Engineer",
-      "Focus Area": "PD controller, Power, MLB, Display"
-    },
-    {
-      "Name": "Emad Bidari",
-      "Function": "EE",
-      "Role": "NFC Specialist",
-      "Focus Area": "NFC coil design"
-    },
-    {
-      "Name": "John Reimers",
-      "Function": "EE",
-      "Role": "EE Engineer",
-      "Focus Area": "NFC architecture"
-    },
-    {
-      "Name": "Vani Viswanathan",
-      "Function": "Program",
-      "Role": "EPM",
-      "Focus Area": "Schedule, Coordination"
-    },
-    {
-      "Name": "Alice Yen",
-      "Function": "Program",
-      "Role": "PM",
-      "Focus Area": "Forecasting, Hub/power strategy"
-    },
-    {
-      "Name": "Catherine Tran",
-      "Function": "Program",
-      "Role": "PD/ME",
-      "Focus Area": "NFC tap area, CAD studies"
-    },
-    {
-      "Name": "Miguel Harry",
-      "Function": "Program",
-      "Role": "ID",
-      "Focus Area": "UX models, Payment location studies"
-    },
-    {
-      "Name": "Jaime Frias",
-      "Function": "Program",
-      "Role": "ME",
-      "Focus Area": "Accessories, Power adapter, Luxshare vendor"
-    },
-    {
-      "Name": "Greg Fulco",
-      "Function": "Program",
-      "Role": "Product",
-      "Focus Area": "Product requirements, BT decision"
-    }
-  ],
-  "decisions": [
-    {
-      "#": "1",
-      "Decision": "Board ID exhaustion - CDT vs HW-based",
-      "Status": "Open",
-      "DRI": "Zac Crosby",
-      "Date Opened": "2026-04-09",
-      "Date Decided": "",
-      "Impact Area": "SQUID",
-      "Notes": "Almost out of HW product IDs. 2 E1a SKUs + T2c = 0 remaining."
-    },
-    {
-      "#": "2",
-      "Decision": "Pre-dev-build SW strategy",
-      "Status": "Open",
-      "DRI": "Zac Crosby",
-      "Date Opened": "2026-04-01",
-      "Date Decided": "",
-      "Impact Area": "SQUID",
-      "Notes": "How to make E1a builds work for multiple HW targets"
-    },
-    {
-      "#": "3",
-      "Decision": "X2c MLB fork timing",
-      "Status": "Blocked",
-      "DRI": "Cory Douthat / Tom Buttner",
-      "Date Opened": "2026-03-01",
-      "Date Decided": "",
-      "Impact Area": "SQUID / EE",
-      "Notes": "Blocked on X2c discrete memory qual completing first"
-    },
-    {
-      "#": "4",
-      "Decision": "MPoC for E1a",
-      "Status": "Deferred",
-      "DRI": "Zac Crosby",
-      "Date Opened": "2026-03-15",
-      "Date Decided": "",
-      "Impact Area": "SQUID",
-      "Notes": "Not required now. Standard secure PIN solution."
-    },
-    {
-      "#": "5",
-      "Decision": "NFC architecture - Path 2",
-      "Status": "Decided",
-      "DRI": "John Reimers / Ben Brown",
-      "Date Opened": "2026-03-01",
-      "Date Decided": "2026-03-20",
-      "Impact Area": "ESW / EE",
-      "Notes": "Circuitry on SPE board. ID confirming concept 4/15."
-    },
-    {
-      "#": "6",
-      "Decision": "SPE MCO reuse from K1",
-      "Status": "Decided",
-      "DRI": "Ben Brown",
-      "Date Opened": "2026-03-11",
-      "Date Decided": "2026-03-15",
-      "Impact Area": "ESW",
-      "Notes": "Reduces ESW effort"
-    },
-    {
-      "#": "7",
-      "Decision": "USB PD controller selection",
-      "Status": "In Progress",
-      "DRI": "Charles Guan / Tom Buttner",
-      "Date Opened": "2026-02-01",
-      "Date Decided": "",
-      "Impact Area": "SQUID / EE",
-      "Notes": "MPS vs Maxim eval. Franken-proto bring-up underway. EE-7360"
-    },
-    {
-      "#": "8",
-      "Decision": "NFC VDDP voltage issue",
-      "Status": "Investigating",
-      "DRI": "Ben Brown",
-      "Date Opened": "2026-03-20",
-      "Date Decided": "",
-      "Impact Area": "ESW",
-      "Notes": "X2c bug, retry configurable per-product for E1a"
-    },
-    {
-      "#": "9",
-      "Decision": "Bluetooth requirement",
-      "Status": "Decided",
-      "DRI": "Greg Fulco",
-      "Date Opened": "2026-03-01",
-      "Date Decided": "2026-03-15",
-      "Impact Area": "SQUID",
-      "Notes": "Not required. No SW framework for BT with PCI devices."
-    },
-    {
-      "#": "10",
-      "Decision": "No built-in swipe",
-      "Status": "Decided",
-      "DRI": "Alice Yen",
-      "Date Opened": "2026-04-01",
-      "Date Decided": "2026-04-14",
-      "Impact Area": "EE / ESW",
-      "Notes": "R42 USB-C accessory instead. Reduces SW complexity."
-    },
-    {
-      "#": "11",
-      "Decision": "OOBE / Tap-to-Set-Up",
-      "Status": "Planned",
-      "DRI": "John Koryfidis",
-      "Date Opened": "2026-02-04",
-      "Date Decided": "",
-      "Impact Area": "SPA",
-      "Notes": "Q2 bandwidth after K1 Alpha"
-    },
-    {
-      "#": "12",
-      "Decision": "Check reopen without Stand",
-      "Status": "Open",
-      "DRI": "TBD",
-      "Date Opened": "2026-04-01",
-      "Date Decided": "",
-      "Impact Area": "SPA",
-      "Notes": "E1a is forcing function per James Schonzeit"
-    },
-    {
-      "#": "13",
-      "Decision": "ES1 to ES2 logging migration",
-      "Status": "At Risk",
-      "DRI": "TBD",
-      "Date Opened": "2026-04-01",
-      "Date Decided": "",
-      "Impact Area": "SQUID",
-      "Notes": "ES1 deprecated Aug 21. Ford Peprah flagged debugging gap."
-    }
-  ],
-  "dependencies": [
-    {
-      "#": "1",
-      "From": "X2c",
-      "To": "E1a",
-      "Dependency": "X2c discrete memory qual must complete before E1a MLB fork",
-      "Type": "Cross-Program",
-      "Status": "Blocked",
-      "Risk Level": "High",
-      "DRI": "Cory Douthat",
-      "Notes": "No timeline for X2c qual completion"
-    },
-    {
-      "#": "2",
-      "From": "K1 Alpha",
-      "To": "E1a",
-      "Dependency": "SPA OOBE bandwidth available after K1 Alpha",
-      "Type": "Cross-Program",
-      "Status": "Waiting",
-      "Risk Level": "Medium",
-      "DRI": "John Koryfidis",
-      "Notes": "K1 Alpha timing drives SPA availability for E1a"
-    },
-    {
-      "#": "3",
-      "From": "EE",
-      "To": "SQUID",
-      "Dependency": "PD controller selection determines SQUID USB PD driver work",
-      "Type": "Cross-Team",
-      "Status": "In Progress",
-      "Risk Level": "Medium",
-      "DRI": "Tom Buttner to Charles Guan",
-      "Notes": "MPS vs Maxim eval ongoing"
-    },
-    {
-      "#": "4",
-      "From": "EE",
-      "To": "ESW",
-      "Dependency": "NFC coil design determines ESW NFC firmware scope",
-      "Type": "Cross-Team",
-      "Status": "In Progress",
-      "Risk Level": "Low",
-      "DRI": "Emad Bidari to Ben Brown",
-      "Notes": "Path 2 decided, ID confirming 4/15"
-    },
-    {
-      "#": "5",
-      "From": "EE",
-      "To": "SQUID",
-      "Dependency": "Display selection affects SQUID display driver",
-      "Type": "Cross-Team",
-      "Status": "In Progress",
-      "Risk Level": "Medium",
-      "DRI": "RaeAnne Dietz to Zac Crosby",
-      "Notes": "20V display strategy"
-    },
-    {
-      "#": "6",
-      "From": "EE",
-      "To": "ESW",
-      "Dependency": "Power budget constraints affect SW power management",
-      "Type": "Cross-Team",
-      "Status": "In Progress",
-      "Risk Level": "Low",
-      "DRI": "Tom Buttner to Ben Brown",
-      "Notes": "Power budgeting spreadsheet active"
-    },
-    {
-      "#": "7",
-      "From": "SQUID",
-      "To": "ESW",
-      "Dependency": "Board ID / CDT decision affects ESW device identification",
-      "Type": "Internal",
-      "Status": "Open",
-      "Risk Level": "High",
-      "DRI": "Zac Crosby",
-      "Notes": "Almost out of HW product IDs"
-    },
-    {
-      "#": "8",
-      "From": "Platform",
-      "To": "All SW",
-      "Dependency": "ES1 deprecation Aug 21 - logging migration to ES2",
-      "Type": "Internal",
-      "Status": "At Risk",
-      "Risk Level": "High",
-      "DRI": "TBD",
-      "Notes": "Ford Peprah flagged debugging gap"
-    },
-    {
-      "#": "9",
-      "From": "EE",
-      "To": "Program",
-      "Dependency": "ID/UX model review determines form factor for SW",
-      "Type": "Cross-Team",
-      "Status": "In Progress",
-      "Risk Level": "Low",
-      "DRI": "Miguel Harry",
-      "Notes": "Models in SEA office, study Apr 8"
-    },
-    {
-      "#": "10",
-      "From": "Vendor",
-      "To": "EE/SQUID",
-      "Dependency": "Luxshare Hub (H6) prototype and RFQ",
-      "Type": "External",
-      "Status": "In Progress",
-      "Risk Level": "Medium",
-      "DRI": "Jaime Frias",
-      "Notes": "RFQ Q&A in progress"
-    }
-  ]
-};
-// ===== END EMBEDDED DATA =====
-
-var allData = {};
-var activeTab = 'home';
-var activeFilters = { dris: 'All', decisionsStatus: 'All', depsType: 'All', depsRisk: 'All', timelineWs: 'All' };
-var searchTerms = { dris: '', decisions: '', dependencies: '', timeline: '' };
-var sortState = { timeline: {col:null,asc:true}, dris: {col:null,asc:true}, decisions: {col:null,asc:true}, dependencies: {col:null,asc:true} };
-var isRefreshing = false;
-
-// NAV
-document.querySelectorAll('.nav-tab').forEach(function(tab) {
-  tab.addEventListener('click', function() {
-    document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
-    tab.classList.add('active');
-    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-    activeTab = tab.dataset.tab;
-    document.getElementById('page-' + activeTab).classList.add('active');
-  });
-});
-
-// DATA LOADING — uses embedded data (synced from Google Sheet)
-function loadEmbeddedData() {
-  return new Promise(function(resolve) {
-    resolve(EMBEDDED_DATA);
-  });
-}
-
-function showLoading(pageId) {
-  document.getElementById(pageId).innerHTML = '<div class="loading-container"><div class="spinner"></div><div style="color:var(--text-muted);font-size:14px">Loading data…</div></div>';
-}
-
-function showError(pageId, msg) {
-  document.getElementById(pageId).innerHTML = '<div class="error-container"><div style="font-size:36px">⚠️</div><p><strong>Failed to load data</strong></p><p>' + esc(msg) + '</p><button class="retry-btn" onclick="refreshAll()">🔄 Retry</button></div>';
-}
-
-function showOverlay(show) {
-  var overlay = document.getElementById('loadingOverlay');
-  if (show) overlay.classList.remove('hidden');
-  else overlay.classList.add('hidden');
-}
-
-function updateLoadingStatus(msg) {
-  document.getElementById('loadingStatus').textContent = msg;
-}
-
-function refreshAll() {
-  if (isRefreshing) return;
-  isRefreshing = true;
-
-  var btn = document.getElementById('refreshBtn');
-  btn.classList.add('spinning', 'loading');
-  showOverlay(true);
-  updateLoadingStatus('Fetching from Google Sheets…');
-
-  ['page-home','page-timeline','page-dris','page-decisions','page-dependencies'].forEach(function(p) { showLoading(p); });
-
-  loadEmbeddedData().then(function(data) {
-    allData = data;
-    var fetchErrors = [];
-
-    updateLoadingStatus('Rendering dashboard…');
-
-    renderHome();
-    renderTimeline();
-    renderDRIs();
-    renderDecisions();
-    renderDependencies();
-
-    var now = new Date();
-    var timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-    document.getElementById('lastUpdated').textContent = 'Last refreshed: ' + timeStr;
-
-    if (fetchErrors.length > 0) {
-      console.warn('Failed to load sheets:', fetchErrors);
-    }
-
-    btn.classList.remove('spinning', 'loading');
-    isRefreshing = false;
-    setTimeout(function() { showOverlay(false); }, 300);
-  }).catch(function(e) {
-    console.error('Refresh error:', e);
-    ['page-home','page-timeline','page-dris','page-decisions','page-dependencies'].forEach(function(p) {
-      showError(p, 'Failed to load data. Check your network connection and that the Google Sheet is published/accessible.');
+function toggleSection(titleEl) {
+  var arrow = titleEl.querySelector('.collapse-arrow');
+  var contentEl = titleEl.nextElementSibling;
+  if (contentEl.classList.contains('collapsed')) {
+    contentEl.classList.remove('collapsed');
+    contentEl.style.maxHeight = contentEl.scrollHeight + 'px';
+    arrow.classList.remove('collapsed');
+    setTimeout(function() { contentEl.style.maxHeight = 'none'; }, 260);
+  } else {
+    contentEl.style.maxHeight = contentEl.scrollHeight + 'px';
+    requestAnimationFrame(function() {
+      contentEl.classList.add('collapsed');
+      contentEl.style.maxHeight = '0px';
+      arrow.classList.add('collapsed');
     });
-    btn.classList.remove('spinning', 'loading');
-    isRefreshing = false;
-    setTimeout(function() { showOverlay(false); }, 300);
-  });
+  }
 }
 
-// ==================== HOME ====================
-function renderHome() {
-  var page = document.getElementById('page-home');
-  if (!allData.statusCards && !allData.quickLinks) {
-    showError('page-home', 'Could not load Home data.');
+function loadPage(url, navEl) {
+  document.getElementById('home-content').style.display = 'none';
+  var frame = document.getElementById('page-frame');
+  frame.style.display = 'block';
+  frame.src = url;
+  document.querySelectorAll('.sidebar a').forEach(function(a) { a.classList.remove('active'); });
+  if (navEl) navEl.classList.add('active');
+}
+
+function showHome() {
+  document.getElementById('home-content').style.display = 'block';
+  var frame = document.getElementById('page-frame');
+  frame.style.display = 'none';
+  frame.src = '';
+  document.querySelectorAll('.sidebar a').forEach(function(a) { a.classList.remove('active'); });
+  document.getElementById('nav-home').classList.add('active');
+}
+
+// Load status cards from Google Sheet
+var SHEET_ID = '1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ';
+var GVIZ_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=';
+
+var statusColors = {
+  'Green': '#059669', 'Yellow': '#d97706', 'Red': '#dc2626', 'Gray': '#9ca3af'
+};
+var statusIcons = {
+  'Program': '📋', 'SQUID': '🦑', 'ESW': '💻', 'SPA/Apps': '📱',
+  'HW↔SW': '🔗', 'HW-SW': '🔗', 'Risks': '⚠️'
+};
+
+function fetchSheet(name) {
+  // Using embedded data (synced from Google Sheet by Goose)
+  return Promise.resolve(STATUS_CARDS_DATA);
+}
+
+function renderStatusCards(cards) {
+  var grid = document.getElementById('statusGrid');
+  if (!cards || cards.length === 0) {
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;grid-column:1/-1;">No status cards found</div>';
     return;
   }
+  var html = '';
+  cards.forEach(function(card) {
+    var section = card['Section'] || '';
+    var status = card['Status'] || 'Gray';
+    var title = card['Title'] || section;
+    var summary = card['Summary'] || '';
+    var color = statusColors[status] || '#9ca3af';
+    var icon = statusIcons[section] || '📌';
 
-  var statusColors = { Green:'#22c55e', Yellow:'#eab308', Red:'#ef4444', Gray:'#6b7280' };
-  var statusBgColors = { Green:'rgba(34,197,94,.1)', Yellow:'rgba(234,179,8,.1)', Red:'rgba(239,68,68,.1)', Gray:'rgba(107,114,128,.1)' };
+    // Split summary into bullet points on ". " boundaries
+    var bullets = summary.split(/\.\s+/).filter(function(b) { return b.trim(); });
 
-  var cardsHtml = '<div class="cards-grid">';
-  if (allData.statusCards && allData.statusCards.length > 0) {
-    allData.statusCards.forEach(function(row) {
-      var status = row['Status'] || 'Gray';
-      var color = statusColors[status] || statusColors.Gray;
-      var bg = statusBgColors[status] || statusBgColors.Gray;
-      cardsHtml += '<div class="status-card" style="border-left-color:' + color + '">' +
-        '<div class="card-section">' + esc(row['Section'] || '') + '</div>' +
-        '<span class="status-badge" style="background:' + bg + ';color:' + color + '">' + esc(status) + '</span>' +
-        '<div class="card-title">' + esc(row['Title'] || '') + '</div>' +
-        '<div class="card-summary">' + esc(row['Summary'] || '') + '</div>' +
-      '</div>';
-    });
-  } else {
-    cardsHtml += '<div class="no-data">No status cards found</div>';
-  }
-  cardsHtml += '</div>';
-  if (allData.statusCards) {
-    cardsHtml += '<div class="row-counter">Rows loaded: <span class="count-badge">' + allData.statusCards.length + '</span></div>';
-  }
-
-  var linksHtml = '<div class="quick-links-panel"><h2>⚡ Quick Links</h2>';
-  if (allData.quickLinks && allData.quickLinks.length > 0) {
-    var grouped = {};
-    allData.quickLinks.forEach(function(r) {
-      var cat = r['Category'] || 'Other';
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(r);
-    });
-    Object.keys(grouped).forEach(function(cat) {
-      linksHtml += '<div class="sidebar-section"><h3>' + esc(cat) + '</h3>';
-      grouped[cat].forEach(function(link) {
-        var desc = link['Description'] || '';
-        linksHtml += '<a class="sidebar-link" href="' + esc(link['URL'] || '#') + '" target="_blank">' + esc(link['Name'] || 'Link') + (desc ? '<span class="link-desc">' + esc(desc) + '</span>' : '') + '</a>';
-      });
-      linksHtml += '</div>';
-    });
-  } else {
-    linksHtml += '<div class="no-data">No quick links found</div>';
-  }
-  linksHtml += '</div>';
-
-  page.innerHTML = '<div class="home-layout"><div class="home-main">' + cardsHtml + '</div><div class="home-sidebar">' + linksHtml + '</div></div>';
-}
-
-// ==================== TIMELINE (TABLE VIEW) ====================
-var timelineStatusColors = {
-  'Complete':'green','Decided':'green',
-  'In Progress':'blue',
-  'Open':'yellow','Investigating':'orange',
-  'Blocked':'red',
-  'Not Started':'gray',
-  'Planned':'purple'
-};
-
-var wsColors = {
-  'Program':'#eab308','SQUID':'#3b82f6','ESW':'#22c55e',
-  'SPA/Apps':'#a855f7','SPA':'#a855f7',
-  'EE Dependency':'#f97316','EE':'#f97316'
-};
-
-function renderTimeline() {
-  var page = document.getElementById('page-timeline');
-  if (!allData.timeline) {
-    showError('page-timeline', 'Could not load Timeline data. The "Timeline" sheet may be unavailable.');
-    return;
-  }
-
-  var data = allData.timeline;
-
-  // Parse all dates and find range
-  var allDates = [];
-  data.forEach(function(r) {
-    var s = parseDate(r['Start Date'], r['_raw_Start Date']);
-    var e = parseDate(r['End Date'], r['_raw_End Date']);
-    if (s) allDates.push(s);
-    if (e) allDates.push(e);
-  });
-  if (allDates.length === 0) { showError('page-timeline', 'No valid dates found in timeline data.'); return; }
-
-  allDates.sort(function(a,b) { return a-b; });
-  var minDate = new Date(allDates[0]);
-  var maxDate = new Date(allDates[allDates.length - 1]);
-  // Add padding: 1 month before and after
-  minDate.setDate(1);
-  maxDate.setMonth(maxDate.getMonth() + 2);
-  maxDate.setDate(1);
-
-  var totalDays = Math.ceil((maxDate - minDate) / 86400000);
-
-  // Group by workstream, preserving order
-  var wsOrder = ['Program','SQUID','ESW','SPA/Apps','EE Dependency'];
-  var wsGroups = {};
-  wsOrder.forEach(function(ws) { wsGroups[ws] = []; });
-  data.forEach(function(r) {
-    var ws = r['Workstream'] || 'Other';
-    if (!wsGroups[ws]) { wsGroups[ws] = []; wsOrder.push(ws); }
-    wsGroups[ws].push(r);
-  });
-
-  // Build month headers
-  var months = [];
-  var d = new Date(minDate);
-  while (d < maxDate) {
-    var mStart = new Date(d);
-    var mEnd = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-    if (mEnd > maxDate) mEnd = maxDate;
-    var mDays = Math.ceil((mEnd - mStart) / 86400000);
-    var pctWidth = (mDays / totalDays * 100);
-    var label = mStart.toLocaleString('en-US', { month: 'short', year: 'numeric' });
-    months.push({ label: label, width: pctWidth });
-    d = mEnd;
-  }
-
-  // Status colors for bars
-  var barColors = {
-    'Complete': '#22c55e', 'In Progress': '#3b82f6', 'Planned': '#a855f7',
-    'Not Started': '#4b5563', 'Open': '#eab308', 'Blocked': '#ef4444',
-    'Investigating': '#f97316', 'Decided': '#22c55e', 'Waiting': '#eab308'
-  };
-
-  // Legend
-  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">';
-  html += '<div style="font-size:16px;font-weight:700">☰ Program Timeline — E1a Solo Station</div>';
-  html += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
-  ['Complete','In Progress','Not Started','Open','Blocked','Planned'].forEach(function(s) {
-    html += '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted)">';
-    html += '<span style="width:10px;height:10px;border-radius:2px;background:' + barColors[s] + ';display:inline-block"></span>' + s;
-    html += '</div>';
-  });
-  html += '</div></div>';
-
-  // Gantt container
-  html += '<div style="background:var(--card);border-radius:10px;border:1px solid var(--border);overflow:hidden">';
-
-  // Month header row
-  html += '<div style="display:flex;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;background:var(--card)">';
-  html += '<div style="min-width:130px;max-width:130px;padding:8px 12px;font-size:12px;font-weight:600;color:var(--text-muted);border-right:1px solid var(--border);flex-shrink:0">Workstream</div>';
-  html += '<div style="flex:1;display:flex">';
-  months.forEach(function(m) {
-    html += '<div style="width:' + m.width + '%;padding:8px 6px;font-size:11px;font-weight:600;color:var(--text-muted);border-right:1px solid rgba(51,65,85,0.5);text-align:center;white-space:nowrap;overflow:hidden">' + m.label + '</div>';
-  });
-  html += '</div></div>';
-
-  // Swim lanes
-  wsOrder.forEach(function(ws) {
-    var items = wsGroups[ws];
-    if (!items || items.length === 0) return;
-
-    var wsColor = wsColors[ws] || '#6b7280';
-
-    // Workstream header
-    html += '<div style="display:flex;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">';
-    html += '<div style="min-width:130px;max-width:130px;padding:10px 12px;font-size:13px;font-weight:700;color:var(--text);border-right:1px solid var(--border);display:flex;align-items:flex-start;flex-shrink:0">';
-    html += '<span style="width:4px;height:16px;border-radius:2px;background:' + wsColor + ';margin-right:8px;margin-top:2px;flex-shrink:0"></span>' + esc(ws);
-    html += '</div>';
-
-    // Bars area
-    html += '<div style="flex:1;position:relative;min-height:' + (items.length * 34 + 12) + 'px;padding:6px 0">';
-
-    // Vertical month gridlines
-    var gridLeft = 0;
-    months.forEach(function(m) {
-      html += '<div style="position:absolute;left:' + gridLeft + '%;top:0;bottom:0;border-right:1px solid rgba(51,65,85,0.3);width:0;z-index:0"></div>';
-      gridLeft += m.width;
-    });
-
-    // Today line
-    var today = new Date();
-    if (today >= minDate && today <= maxDate) {
-      var todayPct = ((today - minDate) / 86400000) / totalDays * 100;
-      html += '<div style="position:absolute;left:' + todayPct + '%;top:0;bottom:0;width:2px;background:var(--accent);opacity:0.6;z-index:1" title="Today"></div>';
-    }
-
-    items.forEach(function(r, idx) {
-      var startD = parseDate(r['Start Date'], r['_raw_Start Date']);
-      var endD = parseDate(r['End Date'], r['_raw_End Date']);
-      if (!startD) return;
-      if (!endD) endD = new Date(startD.getTime() + 86400000); // 1 day default for milestones
-
-      var isMilestone = (endD - startD) < 86400000 * 2; // Less than 2 days = milestone diamond
-
-      var leftPct = ((startD - minDate) / 86400000) / totalDays * 100;
-      var widthPct = Math.max(((endD - startD) / 86400000) / totalDays * 100, 0.5);
-      var topPx = idx * 34 + 6;
-      var status = r['Status'] || 'Not Started';
-      var color = barColors[status] || '#4b5563';
-      var milestone = r['Milestone'] || '';
-      var dri = r['DRI'] || '';
-      var notes = r['Notes'] || '';
-
-      var tooltip = milestone + '\\n' + (r['Start Date'] || '') + ' → ' + (r['End Date'] || '') + '\\n' + status + (dri ? '\\nDRI: ' + dri : '') + (notes ? '\\n' + notes : '');
-
-      if (isMilestone) {
-        // Diamond marker for single-day milestones
-        html += '<div style="position:absolute;left:' + leftPct + '%;top:' + topPx + 'px;z-index:2;cursor:pointer" title="' + esc(tooltip).replace(/"/g, '&quot;') + '">';
-        html += '<div style="width:14px;height:14px;background:' + color + ';transform:rotate(45deg);border-radius:2px;margin-left:-7px"></div>';
-        html += '</div>';
-        // Label to the right of diamond
-        html += '<div style="position:absolute;left:calc(' + leftPct + '% + 12px);top:' + (topPx - 1) + 'px;font-size:11px;color:var(--text);white-space:nowrap;z-index:2;pointer-events:none;max-width:200px;overflow:hidden;text-overflow:ellipsis">' + esc(milestone) + '</div>';
+    html += '<div class="status-card">';
+    html += '<div class="card-header" style="color:' + color + '">' + icon + ' ' + title + '</div>';
+    html += '<ul>';
+    bullets.forEach(function(b) {
+      b = b.replace(/\.$/, '');
+      // Bold text before first dash or colon
+      var parts = b.split(/\s*[—–-]\s*(.+)/);
+      if (parts.length > 1) {
+        html += '<li><strong>' + parts[0] + '</strong> — ' + parts[1] + '</li>';
       } else {
-        // Bar for date ranges
-        html += '<div style="position:absolute;left:' + leftPct + '%;width:' + widthPct + '%;top:' + topPx + 'px;height:22px;z-index:2;cursor:pointer" title="' + esc(tooltip).replace(/"/g, '&quot;') + '">';
-        html += '<div style="height:100%;background:' + color + ';border-radius:4px;opacity:0.85;min-width:4px;display:flex;align-items:center;padding:0 6px;overflow:hidden">';
-        html += '<span style="font-size:10px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(milestone) + '</span>';
-        html += '</div></div>';
+        html += '<li>' + b + '</li>';
       }
     });
-
-    html += '</div></div>';
+    html += '</ul></div>';
   });
-
-  html += '</div>';
-
-  // Row counter
-  html += '<div class="row-counter" style="margin-top:8px">Showing <span class="count-badge">' + data.length + '</span> milestones across ' + wsOrder.filter(function(ws) { return wsGroups[ws] && wsGroups[ws].length > 0; }).length + ' workstreams</div>';
-
-  page.innerHTML = html;
+  grid.innerHTML = html;
 }
 
-// Timeline filter/sort functions removed — Gantt chart is visual only
-
-// filterTimeline removed — Gantt chart renders all items visually
-
-// ==================== DRIs ====================
-function renderDRIs() {
-  var page = document.getElementById('page-dris');
-  if (!allData.dris) { showError('page-dris', 'Could not load DRIs data.'); return; }
-
-  var data = allData.dris;
-  var fnSet = {};
-  data.forEach(function(r) { if (r['Function']) fnSet[r['Function']] = true; });
-  var functions = ['All'].concat(Object.keys(fnSet).sort());
-
-  var html = '<div class="filter-bar">';
-  html += '<input class="search-input" placeholder="🔍 Search DRIs…" oninput="searchTerms.dris=this.value;filterDRIs()">';
-  functions.forEach(function(f) {
-    html += '<button class="filter-btn' + (f === 'All' ? ' active' : '') + '" onclick="setDRIFilter(this,\'' + esc(f).replace(/'/g, "\\'") + '\')">' + esc(f) + '</button>';
+// Load status cards on page load
+Promise.resolve(STATUS_CARDS_DATA).then(function(rows) { renderStatusCards(rows); })
+  .catch(function(err) {
+    console.error('Failed to load status cards:', err);
+    document.getElementById('statusGrid').innerHTML =
+      '<div style="text-align:center;padding:40px;color:#ef4444;grid-column:1/-1;">' +
+      '⚠️ Could not load status cards<br><span style="font-size:12px;color:#9ca3af;">Check that the Google Sheet is accessible</span>' +
+      '<br><button onclick="location.reload()" style="margin-top:12px;padding:6px 16px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer;font-family:inherit;font-size:12px;">Retry</button></div>';
   });
-  html += '</div>';
-
-  html += '<div class="table-scroll"><table class="data-table" id="drisTable"><thead><tr>';
-  var driCols = ['Name','Function','Role','Focus Area','Slack Handle','Email'];
-  driCols.forEach(function(col, idx) {
-    html += '<th onclick="sortDRIs(' + idx + ')" data-col="' + idx + '">' + esc(col) + ' <span class="sort-arrow">⇅</span></th>';
-  });
-  html += '</tr></thead><tbody id="drisBody"></tbody></table></div>';
-  html += '<div class="row-counter">Rows loaded: <span class="count-badge">' + data.length + '</span> total | Showing: <span class="count-badge" id="drisShowing">' + data.length + '</span></div>';
-
-  page.innerHTML = html;
-  filterDRIs();
-}
-
-function setDRIFilter(btn, val) {
-  activeFilters.dris = val;
-  btn.closest('.filter-bar').querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  filterDRIs();
-}
-
-function sortDRIs(colIdx) {
-  var st = sortState.dris;
-  if (st.col === colIdx) st.asc = !st.asc;
-  else { st.col = colIdx; st.asc = true; }
-  filterDRIs();
-}
-
-function filterDRIs() {
-  var body = document.getElementById('drisBody');
-  if (!body || !allData.dris) return;
-  var search = searchTerms.dris.toLowerCase();
-  var fnFilter = activeFilters.dris;
-  var driCols = ['Name','Function','Role','Focus Area','Slack Handle','Email'];
-
-  var filtered = allData.dris.filter(function(r) {
-    if (fnFilter !== 'All' && r['Function'] !== fnFilter) return false;
-    if (search) {
-      var all = '';
-      for (var k in r) { if (k.indexOf('_raw_') !== 0) all += ' ' + r[k]; }
-      if (all.toLowerCase().indexOf(search) === -1) return false;
-    }
-    return true;
-  });
-
-  // Sort
-  var st = sortState.dris;
-  if (st.col !== null) {
-    var colName = driCols[st.col];
-    filtered.sort(function(a, b) {
-      var va = (a[colName] || '').toLowerCase();
-      var vb = (b[colName] || '').toLowerCase();
-      if (va < vb) return st.asc ? -1 : 1;
-      if (va > vb) return st.asc ? 1 : -1;
-      return 0;
-    });
-  }
-
-  // Update sort arrows
-  var ths = document.querySelectorAll('#drisTable thead th');
-  ths.forEach(function(th, i) {
-    th.classList.remove('sort-active');
-    var arrow = th.querySelector('.sort-arrow');
-    if (arrow) arrow.textContent = '⇅';
-    if (st.col === i) { th.classList.add('sort-active'); if (arrow) arrow.textContent = st.asc ? '↑' : '↓'; }
-  });
-
-  var showingEl = document.getElementById('drisShowing');
-  if (showingEl) showingEl.textContent = filtered.length;
-
-  if (filtered.length === 0) {
-    body.innerHTML = '<tr><td colspan="6" class="no-data">No matching DRIs found</td></tr>';
-    return;
-  }
-
-  body.innerHTML = filtered.map(function(r) {
-    var fn = r['Function'] || '';
-    var fnClass = fn.indexOf('SPA') === 0 ? 'fn-SPA' : (['SQUID','ESW','EE','Program'].indexOf(fn) !== -1 ? 'fn-' + fn : 'fn-default');
-    return '<tr>' +
-      '<td><strong>' + esc(r['Name'] || '') + '</strong></td>' +
-      '<td><span class="fn-badge ' + fnClass + '">' + esc(fn) + '</span></td>' +
-      '<td>' + esc(r['Role'] || '') + '</td>' +
-      '<td>' + esc(r['Focus Area'] || '') + '</td>' +
-      '<td style="color:var(--accent)">' + esc(r['Slack Handle'] || '') + '</td>' +
-      '<td>' + esc(r['Email'] || '') + '</td>' +
-    '</tr>';
-  }).join('');
-}
-
-// ==================== DECISIONS ====================
-function renderDecisions() {
-  var page = document.getElementById('page-decisions');
-  if (!allData.decisions) { showError('page-decisions', 'Could not load Decisions data.'); return; }
-
-  var data = allData.decisions;
-  var statusMap = { Decided:'green', Open:'yellow', Blocked:'red', 'In Progress':'blue', 'At Risk':'red', Deferred:'gray', Planned:'purple', Investigating:'orange' };
-  var allStatuses = ['All','Decided','Open','In Progress','Blocked','At Risk','Deferred','Planned','Investigating'];
-
-  var counts = {};
-  data.forEach(function(r) { var s = r['Status'] || 'Unknown'; counts[s] = (counts[s] || 0) + 1; });
-
-  var html = '<div class="summary-bar">';
-  allStatuses.slice(1).forEach(function(s) {
-    var c = counts[s] || 0;
-    var color = statusMap[s] || 'gray';
-    html += '<div class="summary-chip"><span class="chip-count" style="color:var(--' + color + ')">' + c + '</span><span class="chip-label">' + esc(s) + '</span></div>';
-  });
-  html += '</div>';
-
-  html += '<div class="filter-bar">';
-  html += '<input class="search-input" placeholder="🔍 Search decisions…" oninput="searchTerms.decisions=this.value;filterDecisions()">';
-  allStatuses.forEach(function(s) {
-    html += '<button class="filter-btn' + (s === 'All' ? ' active' : '') + '" onclick="setDecFilter(this,\'' + esc(s).replace(/'/g, "\\'") + '\')">' + esc(s) + '</button>';
-  });
-  html += '</div>';
-
-  html += '<div class="table-scroll"><table class="data-table" id="decisionsTable"><thead><tr>';
-  var decCols = ['#','Decision','Status','DRI','Date Opened','Date Decided','Impact Area','Notes'];
-  decCols.forEach(function(col, idx) {
-    html += '<th onclick="sortDecisions(' + idx + ')" data-col="' + idx + '">' + esc(col) + ' <span class="sort-arrow">⇅</span></th>';
-  });
-  html += '</tr></thead><tbody id="decisionsBody"></tbody></table></div>';
-  html += '<div class="row-counter">Rows loaded: <span class="count-badge">' + data.length + '</span> total | Showing: <span class="count-badge" id="decisionsShowing">' + data.length + '</span></div>';
-
-  page.innerHTML = html;
-  filterDecisions();
-}
-
-function setDecFilter(btn, val) {
-  activeFilters.decisionsStatus = val;
-  btn.closest('.filter-bar').querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  filterDecisions();
-}
-
-function sortDecisions(colIdx) {
-  var st = sortState.decisions;
-  if (st.col === colIdx) st.asc = !st.asc;
-  else { st.col = colIdx; st.asc = true; }
-  filterDecisions();
-}
-
-function filterDecisions() {
-  var body = document.getElementById('decisionsBody');
-  if (!body || !allData.decisions) return;
-  var search = searchTerms.decisions.toLowerCase();
-  var sFilter = activeFilters.decisionsStatus;
-  var statusMap = { Decided:'green', Open:'yellow', Blocked:'red', 'In Progress':'blue', 'At Risk':'red', Deferred:'gray', Planned:'purple', Investigating:'orange' };
-  var decCols = ['#','Decision','Status','DRI','Date Opened','Date Decided','Impact Area','Notes'];
-
-  var filtered = allData.decisions.filter(function(r) {
-    if (sFilter !== 'All' && r['Status'] !== sFilter) return false;
-    if (search) {
-      var all = '';
-      for (var k in r) { if (k.indexOf('_raw_') !== 0) all += ' ' + r[k]; }
-      if (all.toLowerCase().indexOf(search) === -1) return false;
-    }
-    return true;
-  });
-
-  // Sort
-  var st = sortState.decisions;
-  if (st.col !== null) {
-    var colName = decCols[st.col];
-    filtered.sort(function(a, b) {
-      var va = a[colName] || '';
-      var vb = b[colName] || '';
-      if (colName === '#') {
-        var na = parseInt(va) || 0;
-        var nb = parseInt(vb) || 0;
-        return st.asc ? na - nb : nb - na;
-      }
-      va = va.toLowerCase(); vb = vb.toLowerCase();
-      if (va < vb) return st.asc ? -1 : 1;
-      if (va > vb) return st.asc ? 1 : -1;
-      return 0;
-    });
-  }
-
-  var ths = document.querySelectorAll('#decisionsTable thead th');
-  ths.forEach(function(th, i) {
-    th.classList.remove('sort-active');
-    var arrow = th.querySelector('.sort-arrow');
-    if (arrow) arrow.textContent = '⇅';
-    if (st.col === i) { th.classList.add('sort-active'); if (arrow) arrow.textContent = st.asc ? '↑' : '↓'; }
-  });
-
-  var showingEl = document.getElementById('decisionsShowing');
-  if (showingEl) showingEl.textContent = filtered.length;
-
-  if (filtered.length === 0) {
-    body.innerHTML = '<tr><td colspan="8" class="no-data">No matching decisions found</td></tr>';
-    return;
-  }
-
-  body.innerHTML = filtered.map(function(r) {
-    var s = r['Status'] || '';
-    var badge = statusMap[s] || 'gray';
-    var isAlert = (s === 'Blocked' || s === 'At Risk');
-    return '<tr class="' + (isAlert ? 'row-alert' : '') + '">' +
-      '<td>' + esc(r['#'] || '') + '</td>' +
-      '<td><strong>' + esc(r['Decision'] || '') + '</strong></td>' +
-      '<td><span class="badge badge-' + badge + '">' + esc(s) + '</span></td>' +
-      '<td>' + esc(r['DRI'] || '') + '</td>' +
-      '<td style="white-space:nowrap">' + esc(r['Date Opened'] || '') + '</td>' +
-      '<td style="white-space:nowrap">' + esc(r['Date Decided'] || '') + '</td>' +
-      '<td>' + esc(r['Impact Area'] || '') + '</td>' +
-      '<td style="max-width:200px;font-size:12px;color:var(--text-muted)">' + esc(r['Notes'] || '') + '</td>' +
-    '</tr>';
-  }).join('');
-}
-
-// ==================== DEPENDENCIES ====================
-function renderDependencies() {
-  var page = document.getElementById('page-dependencies');
-  if (!allData.dependencies) { showError('page-dependencies', 'Could not load Dependencies data.'); return; }
-
-  var data = allData.dependencies;
-  var riskColors = { High:'red', Medium:'yellow', Low:'green' };
-  var typeSet = {};
-  data.forEach(function(r) { if (r['Type']) typeSet[r['Type']] = true; });
-  var types = ['All'].concat(Object.keys(typeSet).sort());
-  var risks = ['All','High','Medium','Low'];
-
-  var riskCounts = { High:0, Medium:0, Low:0 };
-  data.forEach(function(r) { var rl = r['Risk Level']; if (riskCounts[rl] !== undefined) riskCounts[rl]++; });
-
-  var html = '<div class="summary-bar">';
-  ['High','Medium','Low'].forEach(function(rl) {
-    var color = riskColors[rl];
-    html += '<div class="summary-chip"><span class="chip-count" style="color:var(--' + color + ')">' + riskCounts[rl] + '</span><span class="chip-label">' + rl + ' Risk</span></div>';
-  });
-  html += '</div>';
-
-  html += '<div class="filter-bar">';
-  html += '<input class="search-input" placeholder="🔍 Search dependencies…" oninput="searchTerms.dependencies=this.value;filterDeps()">';
-  html += '<span style="font-size:11px;color:var(--text-muted);margin-left:8px">Type:</span>';
-  types.forEach(function(t) {
-    html += '<button class="filter-btn' + (t === 'All' ? ' active' : '') + '" data-filter-group="type" onclick="setDepFilter(this,\'type\',\'' + esc(t).replace(/'/g, "\\'") + '\')">' + esc(t) + '</button>';
-  });
-  html += '<span style="font-size:11px;color:var(--text-muted);margin-left:8px">Risk:</span>';
-  risks.forEach(function(r) {
-    html += '<button class="filter-btn' + (r === 'All' ? ' active' : '') + '" data-filter-group="risk" onclick="setDepFilter(this,\'risk\',\'' + esc(r).replace(/'/g, "\\'") + '\')">' + esc(r) + '</button>';
-  });
-  html += '</div>';
-
-  html += '<div class="table-scroll"><table class="data-table" id="depsTable"><thead><tr>';
-  var depCols = ['#','From','To','Dependency','Type','Status','Risk Level','DRI','Notes'];
-  depCols.forEach(function(col, idx) {
-    html += '<th onclick="sortDeps(' + idx + ')" data-col="' + idx + '">' + esc(col) + ' <span class="sort-arrow">⇅</span></th>';
-  });
-  html += '</tr></thead><tbody id="depsBody"></tbody></table></div>';
-  html += '<div class="row-counter">Rows loaded: <span class="count-badge">' + data.length + '</span> total | Showing: <span class="count-badge" id="depsShowing">' + data.length + '</span></div>';
-
-  page.innerHTML = html;
-  filterDeps();
-}
-
-function setDepFilter(btn, group, val) {
-  if (group === 'type') activeFilters.depsType = val;
-  else activeFilters.depsRisk = val;
-  btn.closest('.filter-bar').querySelectorAll('.filter-btn[data-filter-group="' + group + '"]').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  filterDeps();
-}
-
-function sortDeps(colIdx) {
-  var st = sortState.dependencies;
-  if (st.col === colIdx) st.asc = !st.asc;
-  else { st.col = colIdx; st.asc = true; }
-  filterDeps();
-}
-
-function filterDeps() {
-  var body = document.getElementById('depsBody');
-  if (!body || !allData.dependencies) return;
-  var search = searchTerms.dependencies.toLowerCase();
-  var tFilter = activeFilters.depsType;
-  var rFilter = activeFilters.depsRisk;
-  var riskColors = { High:'red', Medium:'yellow', Low:'green' };
-  var statusMap = { Decided:'green', Open:'yellow', Blocked:'red', 'In Progress':'blue', 'At Risk':'red', Deferred:'gray', Planned:'purple', Investigating:'orange', Active:'blue', Mitigated:'green', Resolved:'green' };
-  var depCols = ['#','From','To','Dependency','Type','Status','Risk Level','DRI','Notes'];
-
-  var filtered = allData.dependencies.filter(function(r) {
-    if (tFilter !== 'All' && r['Type'] !== tFilter) return false;
-    if (rFilter !== 'All' && r['Risk Level'] !== rFilter) return false;
-    if (search) {
-      var all = '';
-      for (var k in r) { if (k.indexOf('_raw_') !== 0) all += ' ' + r[k]; }
-      if (all.toLowerCase().indexOf(search) === -1) return false;
-    }
-    return true;
-  });
-
-  // Sort
-  var st = sortState.dependencies;
-  if (st.col !== null) {
-    var colName = depCols[st.col];
-    filtered.sort(function(a, b) {
-      var va = a[colName] || '';
-      var vb = b[colName] || '';
-      if (colName === '#') {
-        var na = parseInt(va) || 0;
-        var nb = parseInt(vb) || 0;
-        return st.asc ? na - nb : nb - na;
-      }
-      va = va.toLowerCase(); vb = vb.toLowerCase();
-      if (va < vb) return st.asc ? -1 : 1;
-      if (va > vb) return st.asc ? 1 : -1;
-      return 0;
-    });
-  }
-
-  var ths = document.querySelectorAll('#depsTable thead th');
-  ths.forEach(function(th, i) {
-    th.classList.remove('sort-active');
-    var arrow = th.querySelector('.sort-arrow');
-    if (arrow) arrow.textContent = '⇅';
-    if (st.col === i) { th.classList.add('sort-active'); if (arrow) arrow.textContent = st.asc ? '↑' : '↓'; }
-  });
-
-  var showingEl = document.getElementById('depsShowing');
-  if (showingEl) showingEl.textContent = filtered.length;
-
-  if (filtered.length === 0) {
-    body.innerHTML = '<tr><td colspan="9" class="no-data">No matching dependencies found</td></tr>';
-    return;
-  }
-
-  body.innerHTML = filtered.map(function(r) {
-    var rl = r['Risk Level'] || '';
-    var rBadge = riskColors[rl] || 'gray';
-    var s = r['Status'] || '';
-    var sBadge = statusMap[s] || 'gray';
-    var isHigh = rl === 'High';
-    return '<tr class="' + (isHigh ? 'row-alert' : '') + '">' +
-      '<td>' + esc(r['#'] || '') + '</td>' +
-      '<td>' + esc(r['From'] || '') + '</td>' +
-      '<td>' + esc(r['To'] || '') + '</td>' +
-      '<td><strong>' + esc(r['Dependency'] || '') + '</strong></td>' +
-      '<td>' + esc(r['Type'] || '') + '</td>' +
-      '<td><span class="badge badge-' + sBadge + '">' + esc(s) + '</span></td>' +
-      '<td><span class="badge badge-' + rBadge + '">' + esc(rl) + '</span></td>' +
-      '<td>' + esc(r['DRI'] || '') + '</td>' +
-      '<td style="max-width:180px;font-size:12px;color:var(--text-muted)">' + esc(r['Notes'] || '') + '</td>' +
-    '</tr>';
-  }).join('');
-}
-
-// UTILS
-function parseDate(str, rawVal) {
-  if (!str && !rawVal) return null;
-  if (rawVal) {
-    var rawStr = String(rawVal);
-    var gMatch = rawStr.match(/Date\((\d+),(\d+),(\d+)\)/);
-    if (gMatch) return new Date(parseInt(gMatch[1]), parseInt(gMatch[2]), parseInt(gMatch[3]));
-  }
-  if (!str) return null;
-  str = String(str).trim();
-  var slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (slashMatch) return new Date(parseInt(slashMatch[3]), parseInt(slashMatch[1]) - 1, parseInt(slashMatch[2]));
-  var isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  if (isoMatch) return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
-  var d = new Date(str);
-  if (!isNaN(d.getTime())) return d;
-  return null;
-}
-
-function esc(str) {
-  var div = document.createElement('div');
-  div.textContent = String(str);
-  return div.innerHTML;
-}
-
-// INIT
-refreshAll();
 </script>
+
 </body>
 </html>

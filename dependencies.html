@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dependencies Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f1f5f9;
+    color: #1a1a1a;
+    padding: 24px;
+    line-height: 1.5;
+  }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header .subtitle { font-size: 13px; color: #64748b; }
+  .summary-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; color: #fff; }
+  .pill.high { background: #ef4444; }
+  .pill.medium { background: #eab308; }
+  .pill.low { background: #22c55e; }
+  .pill.blocked { background: #ef4444; }
+
+  /* Controls */
+  .controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .search-box {
+    padding: 8px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    width: 260px;
+    background: #fff;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .search-box:focus { border-color: #6366f1; }
+  .filter-select {
+    padding: 8px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .filter-select:focus { border-color: #6366f1; }
+  .result-count { font-size: 12px; color: #64748b; margin-left: auto; }
+
+  /* Table */
+  .table-wrap {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+  thead th {
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #64748b;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    position: relative;
+  }
+  thead th:hover { color: #1a1a1a; }
+  thead th .sort-icon { margin-left: 4px; font-size: 10px; opacity: .4; }
+  thead th.sorted-asc .sort-icon,
+  thead th.sorted-desc .sort-icon { opacity: 1; color: #6366f1; }
+  tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f8fafc; }
+  td { padding: 10px 14px; font-size: 13px; vertical-align: middle; }
+  td.num { text-align: center; color: #94a3b8; font-weight: 500; font-size: 12px; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .badge-high { background: #ef4444; }
+  .badge-medium { background: #eab308; }
+  .badge-low { background: #22c55e; }
+  .badge-blocked { background: #ef4444; }
+  .badge-in-progress { background: #6366f1; }
+  .badge-open { background: #eab308; }
+  .badge-at-risk { background: #ef4444; }
+  .badge-waiting { background: #d97706; }
+  .badge-resolved { background: #22c55e; }
+  .badge-closed { background: #64748b; }
+
+  /* Type badges */
+  .type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #e0e7ff;
+    color: #4338ca;
+    white-space: nowrap;
+  }
+
+  /* Notes column */
+  td.notes { max-width: 220px; font-size: 12px; color: #64748b; }
+
+  /* Error / Loading */
+  .state-msg {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+    font-size: 14px;
+  }
+  .state-msg .emoji { font-size: 32px; margin-bottom: 12px; }
+  .retry-btn {
+    margin-top: 14px;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #6366f1;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .2s;
+  }
+  .retry-btn:hover { background: #4f46e5; }
+
+  .spinner {
+    width: 28px; height: 28px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 0 auto 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📌 Dependencies Tracker</h1>
+    <div class="subtitle">Cross-program and cross-team dependency tracking</div>
+  </div>
+  <div class="summary-pills" id="summaryPills"></div>
+</div>
+
+<div class="controls">
+  <input type="text" class="search-box" id="searchBox" placeholder="Search dependencies…">
+  <select class="filter-select" id="filterType">
+    <option value="All">All Types</option>
+    <option value="Cross-Program">Cross-Program</option>
+    <option value="Cross-Team">Cross-Team</option>
+    <option value="Internal">Internal</option>
+    <option value="External">External</option>
+  </select>
+  <select class="filter-select" id="filterRisk">
+    <option value="All">All Risk Levels</option>
+    <option value="High">High</option>
+    <option value="Medium">Medium</option>
+    <option value="Low">Low</option>
+  </select>
+  <span class="result-count" id="resultCount"></span>
+</div>
+
+<div class="table-wrap" id="tableWrap">
+  <div class="state-msg" id="loadingMsg">
+    <div class="spinner"></div>
+    Loading dependencies…
+  </div>
+</div>
+
+<script>
+var DEPS_DATA = [
+  {
+    "#": "1",
+    "From": "X2c",
+    "To": "E1a",
+    "Dependency": "X2c discrete memory qual must complete before E1a MLB fork",
+    "Type": "Cross-Program",
+    "Status": "Blocked",
+    "Risk Level": "High",
+    "DRI": "Cory Douthat",
+    "Notes": "No timeline for X2c qual completion"
+  },
+  {
+    "#": "2",
+    "From": "K1 Alpha",
+    "To": "E1a",
+    "Dependency": "SPA OOBE bandwidth available after K1 Alpha",
+    "Type": "Cross-Program",
+    "Status": "Waiting",
+    "Risk Level": "Medium",
+    "DRI": "John Koryfidis",
+    "Notes": "K1 Alpha timing drives SPA availability for E1a"
+  },
+  {
+    "#": "3",
+    "From": "EE",
+    "To": "SQUID",
+    "Dependency": "PD controller selection determines SQUID USB PD driver work",
+    "Type": "Cross-Team",
+    "Status": "In Progress",
+    "Risk Level": "Medium",
+    "DRI": "Tom Buttner to Charles Guan",
+    "Notes": "MPS vs Maxim eval ongoing"
+  },
+  {
+    "#": "4",
+    "From": "EE",
+    "To": "ESW",
+    "Dependency": "NFC coil design determines ESW NFC firmware scope",
+    "Type": "Cross-Team",
+    "Status": "In Progress",
+    "Risk Level": "Low",
+    "DRI": "Emad Bidari to Ben Brown",
+    "Notes": "Path 2 decided, ID confirming 4/15"
+  },
+  {
+    "#": "5",
+    "From": "EE",
+    "To": "SQUID",
+    "Dependency": "Display selection affects SQUID display driver",
+    "Type": "Cross-Team",
+    "Status": "In Progress",
+    "Risk Level": "Medium",
+    "DRI": "RaeAnne Dietz to Zac Crosby",
+    "Notes": "20V display strategy"
+  },
+  {
+    "#": "6",
+    "From": "EE",
+    "To": "ESW",
+    "Dependency": "Power budget constraints affect SW power management",
+    "Type": "Cross-Team",
+    "Status": "In Progress",
+    "Risk Level": "Low",
+    "DRI": "Tom Buttner to Ben Brown",
+    "Notes": "Power budgeting spreadsheet active"
+  },
+  {
+    "#": "7",
+    "From": "SQUID",
+    "To": "ESW",
+    "Dependency": "Board ID / CDT decision affects ESW device identification",
+    "Type": "Internal",
+    "Status": "Open",
+    "Risk Level": "High",
+    "DRI": "Zac Crosby",
+    "Notes": "Almost out of HW product IDs"
+  },
+  {
+    "#": "8",
+    "From": "Platform",
+    "To": "All SW",
+    "Dependency": "ES1 deprecation Aug 21 - logging migration to ES2",
+    "Type": "Internal",
+    "Status": "At Risk",
+    "Risk Level": "High",
+    "DRI": "TBD",
+    "Notes": "Ford Peprah flagged debugging gap"
+  },
+  {
+    "#": "9",
+    "From": "EE",
+    "To": "Program",
+    "Dependency": "ID/UX model review determines form factor for SW",
+    "Type": "Cross-Team",
+    "Status": "In Progress",
+    "Risk Level": "Low",
+    "DRI": "Miguel Harry",
+    "Notes": "Models in SEA office, study Apr 8"
+  },
+  {
+    "#": "10",
+    "From": "Vendor",
+    "To": "EE/SQUID",
+    "Dependency": "Luxshare Hub (H6) prototype and RFQ",
+    "Type": "External",
+    "Status": "In Progress",
+    "Risk Level": "Medium",
+    "DRI": "Jaime Frias",
+    "Notes": "RFQ Q&A in progress"
+  }
+];
+
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1CS1v8ZKjElIqd4_OZvsDCoYdYB7DpGZ2FVAx_A-qcQQ/gviz/tq?tqx=out:json&sheet=Dependencies';
+
+let allRows = [];
+let sortCol = -1;
+let sortAsc = true;
+
+/* ---- Fetch & Parse ---- */
+async function fetchData() {
+  // Using embedded data (synced from Google Sheet by Goose)
+  allRows = DEPS_DATA.map(function(r, idx) {
+    return {
+      num: r['#'] || String(idx + 1),
+      from: r['From'] || '',
+      to: r['To'] || '',
+      dependency: r['Dependency'] || '',
+      type: r['Type'] || '',
+      status: r['Status'] || '',
+      risk: r['Risk Level'] || '',
+      dri: r['DRI'] || '',
+      notes: r['Notes'] || ''
+    };
+  }).filter(function(r) { return r.from || r.to || r.dependency; });
+  renderSummary();
+  renderTable();
+}
+
+function cellVal(cell) {
+  if (!cell) return '';
+  if (cell.f) return cell.f;
+  if (cell.v === null || cell.v === undefined) return '';
+  return String(cell.v);
+}
+
+function parseSheet(json) {
+  const cols = json.table.cols.map(c => (c.label || '').trim());
+  const rows = (json.table.rows || []);
+  allRows = rows.map((r, idx) => {
+    const vals = (r.c || []).map(cellVal);
+    return {
+      num: idx + 1,
+      from: vals[0] || '',
+      to: vals[1] || '',
+      dependency: vals[2] || '',
+      type: vals[3] || '',
+      status: vals[4] || '',
+      risk: vals[5] || '',
+      dri: vals[6] || '',
+      notes: vals[7] || ''
+    };
+  }).filter(r => r.from || r.to || r.dependency);
+  renderSummary();
+  renderTable();
+}
+
+/* ---- Summary Pills ---- */
+function renderSummary() {
+  const pills = document.getElementById('summaryPills');
+  const high = allRows.filter(r => norm(r.risk) === 'high').length;
+  const med = allRows.filter(r => norm(r.risk) === 'medium').length;
+  const low = allRows.filter(r => norm(r.risk) === 'low').length;
+  const blocked = allRows.filter(r => norm(r.status) === 'blocked').length;
+  pills.innerHTML = `
+    ${blocked ? `<span class="pill blocked">${blocked} Blocked</span>` : ''}
+    ${high ? `<span class="pill high">${high} High Risk</span>` : ''}
+    ${med ? `<span class="pill medium">${med} Medium</span>` : ''}
+    ${low ? `<span class="pill low">${low} Low</span>` : ''}
+  `;
+}
+
+/* ---- Filtering & Sorting ---- */
+function norm(s) { return (s || '').trim().toLowerCase().replace(/[\s-]+/g, ' '); }
+
+function getFiltered() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const typeF = document.getElementById('filterType').value;
+  const riskF = document.getElementById('filterRisk').value;
+
+  let rows = allRows;
+  if (typeF !== 'All') rows = rows.filter(r => norm(r.type) === norm(typeF));
+  if (riskF !== 'All') rows = rows.filter(r => norm(r.risk) === norm(riskF));
+  if (q) rows = rows.filter(r =>
+    [r.from, r.to, r.dependency, r.type, r.status, r.risk, r.dri, r.notes]
+      .some(v => v.toLowerCase().includes(q))
+  );
+
+  if (sortCol >= 0) {
+    const keys = ['num','from','to','dependency','type','status','risk','dri','notes'];
+    const key = keys[sortCol];
+    rows = [...rows].sort((a, b) => {
+      let va = (a[key] || '').toString().toLowerCase();
+      let vb = (b[key] || '').toString().toLowerCase();
+      if (key === 'num') { va = a.num; vb = b.num; return sortAsc ? va - vb : vb - va; }
+      return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+  }
+  return rows;
+}
+
+/* ---- Render ---- */
+function riskBadge(v) {
+  const n = norm(v);
+  const cls = n === 'high' ? 'badge-high' : n === 'medium' ? 'badge-medium' : n === 'low' ? 'badge-low' : '';
+  return cls ? `<span class="badge ${cls}">${v}</span>` : esc(v);
+}
+
+function statusBadge(v) {
+  const n = norm(v);
+  let cls = '';
+  if (n === 'blocked') cls = 'badge-blocked';
+  else if (n === 'in progress') cls = 'badge-in-progress';
+  else if (n === 'open') cls = 'badge-open';
+  else if (n === 'at risk') cls = 'badge-at-risk';
+  else if (n === 'waiting') cls = 'badge-waiting';
+  else if (n === 'resolved' || n === 'done') cls = 'badge-resolved';
+  else if (n === 'closed') cls = 'badge-closed';
+  return cls ? `<span class="badge ${cls}">${v}</span>` : esc(v);
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderTable() {
+  const rows = getFiltered();
+  document.getElementById('resultCount').textContent = `${rows.length} of ${allRows.length} dependencies`;
+
+  const colHeaders = ['#','From','To','Dependency','Type','Status','Risk Level','DRI','Notes'];
+  const wrap = document.getElementById('tableWrap');
+
+  if (rows.length === 0 && allRows.length > 0) {
+    wrap.innerHTML = '<div class="state-msg"><div class="emoji">🔍</div>No dependencies match your filters.</div>';
+    return;
+  }
+
+  let html = '<table><thead><tr>';
+  colHeaders.forEach((h, i) => {
+    let cls = '';
+    let icon = '↕';
+    if (sortCol === i) {
+      cls = sortAsc ? 'sorted-asc' : 'sorted-desc';
+      icon = sortAsc ? '↑' : '↓';
+    }
+    html += `<th class="${cls}" onclick="handleSort(${i})">${h}<span class="sort-icon">${icon}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach((r, idx) => {
+    html += `<tr>
+      <td class="num">${r.num}</td>
+      <td>${esc(r.from)}</td>
+      <td>${esc(r.to)}</td>
+      <td><strong>${esc(r.dependency)}</strong></td>
+      <td><span class="type-badge">${esc(r.type)}</span></td>
+      <td>${statusBadge(r.status)}</td>
+      <td>${riskBadge(r.risk)}</td>
+      <td>${esc(r.dri)}</td>
+      <td class="notes">${esc(r.notes)}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function handleSort(col) {
+  if (sortCol === col) { sortAsc = !sortAsc; }
+  else { sortCol = col; sortAsc = true; }
+  renderTable();
+}
+
+/* ---- Event Listeners ---- */
+document.getElementById('searchBox').addEventListener('input', renderTable);
+document.getElementById('filterType').addEventListener('change', renderTable);
+document.getElementById('filterRisk').addEventListener('change', renderTable);
+
+/* ---- Init ---- */
+fetchData();
+</script>
+</body>
+</html>
