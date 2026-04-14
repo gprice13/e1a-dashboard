@@ -1367,163 +1367,159 @@ function renderTimeline() {
 
   var data = allData.timeline;
 
-  // Collect unique workstreams
-  var wsSet = {};
-  data.forEach(function(r) { var ws = r['Workstream'] || ''; if (ws) wsSet[ws] = true; });
-  var workstreams = ['All'].concat(Object.keys(wsSet).sort());
+  // Parse all dates and find range
+  var allDates = [];
+  data.forEach(function(r) {
+    var s = parseDate(r['Start Date'], r['_raw_Start Date']);
+    var e = parseDate(r['End Date'], r['_raw_End Date']);
+    if (s) allDates.push(s);
+    if (e) allDates.push(e);
+  });
+  if (allDates.length === 0) { showError('page-timeline', 'No valid dates found in timeline data.'); return; }
 
-  // Status summary
-  var statusCounts = {};
-  data.forEach(function(r) { var s = r['Status'] || 'Unknown'; statusCounts[s] = (statusCounts[s] || 0) + 1; });
+  allDates.sort(function(a,b) { return a-b; });
+  var minDate = new Date(allDates[0]);
+  var maxDate = new Date(allDates[allDates.length - 1]);
+  // Add padding: 1 month before and after
+  minDate.setDate(1);
+  maxDate.setMonth(maxDate.getMonth() + 2);
+  maxDate.setDate(1);
 
-  var html = '';
+  var totalDays = Math.ceil((maxDate - minDate) / 86400000);
 
-  // Summary chips
-  html += '<div class="summary-bar">';
-  var summaryStatuses = ['Complete','In Progress','Planned','Not Started','Open','Blocked','Investigating','Decided'];
-  summaryStatuses.forEach(function(s) {
-    var c = statusCounts[s] || 0;
-    if (c > 0) {
-      var badge = timelineStatusColors[s] || 'gray';
-      html += '<div class="summary-chip"><span class="chip-count" style="color:var(--' + badge + ')">' + c + '</span><span class="chip-label">' + esc(s) + '</span></div>';
+  // Group by workstream, preserving order
+  var wsOrder = ['Program','SQUID','ESW','SPA/Apps','EE Dependency'];
+  var wsGroups = {};
+  wsOrder.forEach(function(ws) { wsGroups[ws] = []; });
+  data.forEach(function(r) {
+    var ws = r['Workstream'] || 'Other';
+    if (!wsGroups[ws]) { wsGroups[ws] = []; wsOrder.push(ws); }
+    wsGroups[ws].push(r);
+  });
+
+  // Build month headers
+  var months = [];
+  var d = new Date(minDate);
+  while (d < maxDate) {
+    var mStart = new Date(d);
+    var mEnd = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    if (mEnd > maxDate) mEnd = maxDate;
+    var mDays = Math.ceil((mEnd - mStart) / 86400000);
+    var pctWidth = (mDays / totalDays * 100);
+    var label = mStart.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+    months.push({ label: label, width: pctWidth });
+    d = mEnd;
+  }
+
+  // Status colors for bars
+  var barColors = {
+    'Complete': '#22c55e', 'In Progress': '#3b82f6', 'Planned': '#a855f7',
+    'Not Started': '#4b5563', 'Open': '#eab308', 'Blocked': '#ef4444',
+    'Investigating': '#f97316', 'Decided': '#22c55e', 'Waiting': '#eab308'
+  };
+
+  // Legend
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">';
+  html += '<div style="font-size:16px;font-weight:700">☰ Program Timeline — E1a Solo Station</div>';
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
+  ['Complete','In Progress','Not Started','Open','Blocked','Planned'].forEach(function(s) {
+    html += '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted)">';
+    html += '<span style="width:10px;height:10px;border-radius:2px;background:' + barColors[s] + ';display:inline-block"></span>' + s;
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  // Gantt container
+  html += '<div style="background:var(--card);border-radius:10px;border:1px solid var(--border);overflow:hidden">';
+
+  // Month header row
+  html += '<div style="display:flex;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;background:var(--card)">';
+  html += '<div style="min-width:130px;max-width:130px;padding:8px 12px;font-size:12px;font-weight:600;color:var(--text-muted);border-right:1px solid var(--border);flex-shrink:0">Workstream</div>';
+  html += '<div style="flex:1;display:flex">';
+  months.forEach(function(m) {
+    html += '<div style="width:' + m.width + '%;padding:8px 6px;font-size:11px;font-weight:600;color:var(--text-muted);border-right:1px solid rgba(51,65,85,0.5);text-align:center;white-space:nowrap;overflow:hidden">' + m.label + '</div>';
+  });
+  html += '</div></div>';
+
+  // Swim lanes
+  wsOrder.forEach(function(ws) {
+    var items = wsGroups[ws];
+    if (!items || items.length === 0) return;
+
+    var wsColor = wsColors[ws] || '#6b7280';
+
+    // Workstream header
+    html += '<div style="display:flex;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">';
+    html += '<div style="min-width:130px;max-width:130px;padding:10px 12px;font-size:13px;font-weight:700;color:var(--text);border-right:1px solid var(--border);display:flex;align-items:flex-start;flex-shrink:0">';
+    html += '<span style="width:4px;height:16px;border-radius:2px;background:' + wsColor + ';margin-right:8px;margin-top:2px;flex-shrink:0"></span>' + esc(ws);
+    html += '</div>';
+
+    // Bars area
+    html += '<div style="flex:1;position:relative;min-height:' + (items.length * 34 + 12) + 'px;padding:6px 0">';
+
+    // Vertical month gridlines
+    var gridLeft = 0;
+    months.forEach(function(m) {
+      html += '<div style="position:absolute;left:' + gridLeft + '%;top:0;bottom:0;border-right:1px solid rgba(51,65,85,0.3);width:0;z-index:0"></div>';
+      gridLeft += m.width;
+    });
+
+    // Today line
+    var today = new Date();
+    if (today >= minDate && today <= maxDate) {
+      var todayPct = ((today - minDate) / 86400000) / totalDays * 100;
+      html += '<div style="position:absolute;left:' + todayPct + '%;top:0;bottom:0;width:2px;background:var(--accent);opacity:0.6;z-index:1" title="Today"></div>';
     }
-  });
-  // Show any statuses not in the predefined list
-  Object.keys(statusCounts).forEach(function(s) {
-    if (summaryStatuses.indexOf(s) === -1) {
-      html += '<div class="summary-chip"><span class="chip-count" style="color:var(--gray)">' + statusCounts[s] + '</span><span class="chip-label">' + esc(s) + '</span></div>';
-    }
-  });
-  html += '</div>';
 
-  // Filters
-  html += '<div class="filter-bar">';
-  html += '<input class="search-input" id="timelineSearch" placeholder="🔍 Search milestones…" oninput="searchTerms.timeline=this.value;filterTimeline()">';
-  html += '<span style="font-size:11px;color:var(--text-muted);margin-left:8px">Workstream:</span>';
-  workstreams.forEach(function(ws) {
-    html += '<button class="filter-btn' + (ws === 'All' ? ' active' : '') + '" data-filter-group="ws" onclick="setTimelineFilter(this,\'' + esc(ws).replace(/'/g, "\\'") + '\')">' + esc(ws) + '</button>';
-  });
-  html += '</div>';
+    items.forEach(function(r, idx) {
+      var startD = parseDate(r['Start Date'], r['_raw_Start Date']);
+      var endD = parseDate(r['End Date'], r['_raw_End Date']);
+      if (!startD) return;
+      if (!endD) endD = new Date(startD.getTime() + 86400000); // 1 day default for milestones
 
-  // Table
-  html += '<div class="table-scroll" id="timelineTableScroll"><table class="data-table" id="timelineTable"><thead><tr>';
-  var tlCols = ['Workstream','Milestone','Start Date','End Date','Status','DRI','Notes','Source'];
-  tlCols.forEach(function(col, idx) {
-    html += '<th onclick="sortTimeline(' + idx + ')" data-col="' + idx + '">' + esc(col) + ' <span class="sort-arrow">⇅</span></th>';
+      var isMilestone = (endD - startD) < 86400000 * 2; // Less than 2 days = milestone diamond
+
+      var leftPct = ((startD - minDate) / 86400000) / totalDays * 100;
+      var widthPct = Math.max(((endD - startD) / 86400000) / totalDays * 100, 0.5);
+      var topPx = idx * 34 + 6;
+      var status = r['Status'] || 'Not Started';
+      var color = barColors[status] || '#4b5563';
+      var milestone = r['Milestone'] || '';
+      var dri = r['DRI'] || '';
+      var notes = r['Notes'] || '';
+
+      var tooltip = milestone + '\\n' + (r['Start Date'] || '') + ' → ' + (r['End Date'] || '') + '\\n' + status + (dri ? '\\nDRI: ' + dri : '') + (notes ? '\\n' + notes : '');
+
+      if (isMilestone) {
+        // Diamond marker for single-day milestones
+        html += '<div style="position:absolute;left:' + leftPct + '%;top:' + topPx + 'px;z-index:2;cursor:pointer" title="' + esc(tooltip).replace(/"/g, '&quot;') + '">';
+        html += '<div style="width:14px;height:14px;background:' + color + ';transform:rotate(45deg);border-radius:2px;margin-left:-7px"></div>';
+        html += '</div>';
+        // Label to the right of diamond
+        html += '<div style="position:absolute;left:calc(' + leftPct + '% + 12px);top:' + (topPx - 1) + 'px;font-size:11px;color:var(--text);white-space:nowrap;z-index:2;pointer-events:none;max-width:200px;overflow:hidden;text-overflow:ellipsis">' + esc(milestone) + '</div>';
+      } else {
+        // Bar for date ranges
+        html += '<div style="position:absolute;left:' + leftPct + '%;width:' + widthPct + '%;top:' + topPx + 'px;height:22px;z-index:2;cursor:pointer" title="' + esc(tooltip).replace(/"/g, '&quot;') + '">';
+        html += '<div style="height:100%;background:' + color + ';border-radius:4px;opacity:0.85;min-width:4px;display:flex;align-items:center;padding:0 6px;overflow:hidden">';
+        html += '<span style="font-size:10px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(milestone) + '</span>';
+        html += '</div></div>';
+      }
+    });
+
+    html += '</div></div>';
   });
-  html += '</tr></thead><tbody id="timelineBody"></tbody></table></div>';
+
+  html += '</div>';
 
   // Row counter
-  html += '<div class="row-counter" id="timelineCounter">Rows loaded: <span class="count-badge">' + data.length + '</span> total from sheet | Showing: <span class="count-badge" id="timelineShowing">' + data.length + '</span></div>';
+  html += '<div class="row-counter" style="margin-top:8px">Showing <span class="count-badge">' + data.length + '</span> milestones across ' + wsOrder.filter(function(ws) { return wsGroups[ws] && wsGroups[ws].length > 0; }).length + ' workstreams</div>';
 
   page.innerHTML = html;
-  filterTimeline();
 }
 
-function setTimelineFilter(btn, val) {
-  activeFilters.timelineWs = val;
-  btn.closest('.filter-bar').querySelectorAll('.filter-btn[data-filter-group="ws"]').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  filterTimeline();
-}
+// Timeline filter/sort functions removed — Gantt chart is visual only
 
-function sortTimeline(colIdx) {
-  var st = sortState.timeline;
-  if (st.col === colIdx) {
-    st.asc = !st.asc;
-  } else {
-    st.col = colIdx;
-    st.asc = true;
-  }
-  filterTimeline();
-}
-
-function filterTimeline() {
-  var body = document.getElementById('timelineBody');
-  if (!body || !allData.timeline) return;
-
-  var search = searchTerms.timeline.toLowerCase();
-  var wsFilter = activeFilters.timelineWs;
-  var tlCols = ['Workstream','Milestone','Start Date','End Date','Status','DRI','Notes','Source'];
-
-  var filtered = allData.timeline.filter(function(r) {
-    if (wsFilter !== 'All' && r['Workstream'] !== wsFilter) return false;
-    if (search) {
-      var all = '';
-      for (var k in r) {
-        if (k.indexOf('_raw_') !== 0) all += ' ' + r[k];
-      }
-      if (all.toLowerCase().indexOf(search) === -1) return false;
-    }
-    return true;
-  });
-
-  // Sort
-  var st = sortState.timeline;
-  if (st.col !== null) {
-    var colName = tlCols[st.col];
-    filtered.sort(function(a, b) {
-      var va = a[colName] || '';
-      var vb = b[colName] || '';
-      // Try date sort for date columns
-      if (colName === 'Start Date' || colName === 'End Date') {
-        var da = parseDate(va, a['_raw_' + colName]);
-        var db = parseDate(vb, b['_raw_' + colName]);
-        var ta = da ? da.getTime() : (st.asc ? Infinity : -Infinity);
-        var tb = db ? db.getTime() : (st.asc ? Infinity : -Infinity);
-        return st.asc ? ta - tb : tb - ta;
-      }
-      va = va.toLowerCase();
-      vb = vb.toLowerCase();
-      if (va < vb) return st.asc ? -1 : 1;
-      if (va > vb) return st.asc ? 1 : -1;
-      return 0;
-    });
-  }
-
-  // Update sort arrow visuals
-  var ths = document.querySelectorAll('#timelineTable thead th');
-  ths.forEach(function(th, i) {
-    th.classList.remove('sort-active');
-    var arrow = th.querySelector('.sort-arrow');
-    if (arrow) arrow.textContent = '⇅';
-    if (st.col === i) {
-      th.classList.add('sort-active');
-      if (arrow) arrow.textContent = st.asc ? '↑' : '↓';
-    }
-  });
-
-  // Update showing count
-  var showingEl = document.getElementById('timelineShowing');
-  if (showingEl) showingEl.textContent = filtered.length;
-
-  if (filtered.length === 0) {
-    body.innerHTML = '<tr><td colspan="8" class="no-data">No matching milestones found</td></tr>';
-    return;
-  }
-
-  var rowsHtml = '';
-  filtered.forEach(function(r) {
-    var ws = r['Workstream'] || '';
-    var status = r['Status'] || '';
-    var badgeColor = timelineStatusColors[status] || 'gray';
-    var wsColor = wsColors[ws] || '#6b7280';
-    var isBlocked = (status === 'Blocked');
-
-    rowsHtml += '<tr class="' + (isBlocked ? 'row-alert' : '') + '">' +
-      '<td><span class="ws-stripe" style="background:' + wsColor + '"></span>' + esc(ws) + '</td>' +
-      '<td><strong>' + esc(r['Milestone'] || '') + '</strong></td>' +
-      '<td style="white-space:nowrap">' + esc(r['Start Date'] || '') + '</td>' +
-      '<td style="white-space:nowrap">' + esc(r['End Date'] || '') + '</td>' +
-      '<td><span class="badge badge-' + badgeColor + '">' + esc(status) + '</span></td>' +
-      '<td>' + esc(r['DRI'] || '') + '</td>' +
-      '<td style="max-width:220px;font-size:12px;color:var(--text-muted)">' + esc(r['Notes'] || '') + '</td>' +
-      '<td style="font-size:11px;color:var(--text-muted)">' + esc(r['Source'] || '') + '</td>' +
-    '</tr>';
-  });
-
-  body.innerHTML = rowsHtml;
-}
+// filterTimeline removed — Gantt chart renders all items visually
 
 // ==================== DRIs ====================
 function renderDRIs() {
