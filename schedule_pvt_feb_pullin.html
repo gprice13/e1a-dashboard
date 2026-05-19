@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E1a Solo Station — SW Program Timeline (PVT Feb Pull-in)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            color: #1a1a1a;
+            padding: 40px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+        .page-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .page-header .links {
+            font-size: 11px;
+            color: #2563eb;
+        }
+        .page-header .links a {
+            color: #2563eb;
+            text-decoration: none;
+            margin-left: 16px;
+        }
+        .page-header .links a:hover {
+            text-decoration: underline;
+        }
+        .page-subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 32px;
+        }
+
+        /* Timeline Grid */
+        .timeline {
+            position: relative;
+            overflow-x: auto;
+        }
+        .timeline-inner {
+            min-width: 1200px;
+        }
+
+        /* Month Headers */
+        .month-row {
+            display: grid;
+            grid-template-columns: 140px repeat(14, 1fr);
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 8px;
+            margin-bottom: 0;
+        }
+        .month-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            text-align: center;
+        }
+        .month-label.current {
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        /* Grid lines */
+        .grid-lines {
+            display: grid;
+            grid-template-columns: 140px repeat(14, 1fr);
+            position: absolute;
+            top: 40px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            min-width: 1200px;
+        }
+        .grid-line {
+            border-left: 1px solid #f3f4f6;
+        }
+
+        /* Row structure */
+        .timeline-row {
+            display: grid;
+            grid-template-columns: 140px repeat(14, 1fr);
+            min-height: 56px;
+            align-items: center;
+            position: relative;
+        }
+        .timeline-row.section-gap {
+            min-height: 16px;
+        }
+        .timeline-row.bordered {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .row-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #999;
+            padding-right: 12px;
+        }
+        .row-label.dark {
+            color: #333;
+        }
+
+        /* Milestone diamonds */
+        .milestone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .diamond {
+            width: 12px;
+            height: 12px;
+            transform: rotate(45deg);
+            margin-bottom: 4px;
+        }
+        .diamond.black { background: #1a1a1a; }
+        .diamond.blue { background: #2563eb; }
+        .diamond.green { background: #059669; }
+        .diamond.amber { background: #f59e0b; }
+        .diamond.outline {
+            background: white;
+            border: 2px solid #9ca3af;
+        }
+        .milestone-text {
+            font-size: 10px;
+            font-weight: 600;
+            text-align: center;
+            color: #555;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .milestone-date {
+            font-size: 9px;
+            color: #999;
+        }
+
+        /* Build blocks */
+        .build-block {
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            color: #333;
+        }
+        .build-block.dev { background: #dbeafe; }
+        .build-block.proto { background: #d1fae5; }
+        .build-block.evt { background: #fef3c7; }
+        .build-block.prepvt { background: #fce7f3; }
+        .build-block.pvt { background: #e0e7ff; }
+
+        /* Arrow lines for swim lanes */
+        .arrow-line {
+            position: relative;
+            height: 3px;
+            background: #333;
+            display: flex;
+            align-items: center;
+        }
+        .arrow-line::after {
+            content: "";
+            position: absolute;
+            right: -1px;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid #333;
+            border-top: 5.5px solid transparent;
+            border-bottom: 5.5px solid transparent;
+        }
+        .arrow-line.dashed {
+            background: none;
+            border-top: 2px dashed #ccc;
+        }
+        .arrow-line.dashed::after {
+            border-left-color: #ccc;
+        }
+
+        .arrow-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+        .arrow-label {
+            position: absolute;
+            top: -20px;
+            left: 4px;
+            font-size: 12px;
+            color: #374151;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .arrow-duration {
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        /* Swim lane specific colors */
+        .arrow-line.platform { background: #2563eb; }
+        .arrow-line.platform::after { border-left-color: #2563eb; }
+        .arrow-line.drivers { background: #7c3aed; }
+        .arrow-line.drivers::after { border-left-color: #7c3aed; }
+        .arrow-line.nfc { background: #dc2626; }
+        .arrow-line.nfc::after { border-left-color: #dc2626; }
+        .arrow-line.spe { background: #be123c; }
+        .arrow-line.spe::after { border-left-color: #be123c; }
+        .arrow-line.factory { background: #059669; }
+        .arrow-line.factory::after { border-left-color: #059669; }
+        .arrow-line.apps { background: #0891b2; }
+        .arrow-line.apps::after { border-left-color: #0891b2; }
+        .arrow-line.validation { background: #d97706; }
+        .arrow-line.validation::after { border-left-color: #d97706; }
+        .arrow-line.energy { background: #4f46e5; }
+        .arrow-line.energy::after { border-left-color: #4f46e5; }
+
+        /* SW Milestone entry/exit row */
+        .sw-milestone-row {
+            display: grid;
+            grid-template-columns: 140px repeat(14, 1fr);
+            min-height: 72px;
+            align-items: start;
+            padding-top: 8px;
+            position: relative;
+        }
+        .sw-milestone-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 0 4px;
+        }
+        .sw-milestone-item {
+            font-size: 8px;
+            color: #444;
+            line-height: 1.3;
+            padding-left: 8px;
+            position: relative;
+        }
+        .sw-milestone-item::before {
+            content: "◇";
+            position: absolute;
+            left: 0;
+            font-size: 7px;
+        }
+        .sw-milestone-item.entry::before {
+            color: #2563eb;
+        }
+        .sw-milestone-item.exit::before {
+            color: #059669;
+        }
+        .entry-exit-tag {
+            font-size: 7px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .entry-exit-tag.entry { color: #2563eb; }
+        .entry-exit-tag.exit { color: #059669; }
+
+        /* Section dividers */
+        .section-divider {
+            display: grid;
+            grid-template-columns: 140px repeat(14, 1fr);
+            min-height: 4px;
+            border-bottom: 1px solid #e5e7eb;
+            margin: 4px 0;
+        }
+
+        /* Milestone Cards */
+        .milestone-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #555;
+            margin-bottom: 16px;
+        }
+        .milestone-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .milestone-cards-sw {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .milestone-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .milestone-card-header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .milestone-card-header.dev { background: #dbeafe; }
+        .milestone-card-header.proto { background: #d1fae5; }
+        .milestone-card-header.evt { background: #fef3c7; }
+        .milestone-card-header.pvt { background: #e0e7ff; }
+        .milestone-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .milestone-card-date {
+            font-size: 11px;
+            color: #666;
+            font-weight: 500;
+        }
+        .milestone-card-body {
+            padding: 14px 16px;
+        }
+        .milestone-card-section {
+            margin-bottom: 10px;
+        }
+        .milestone-card-section:last-child {
+            margin-bottom: 0;
+        }
+        .milestone-card-label {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .milestone-card-label.entry {
+            color: #1d4ed8;
+            background: #eff6ff;
+        }
+        .milestone-card-label.exit {
+            color: #047857;
+            background: #ecfdf5;
+        }
+        .milestone-card-item {
+            font-size: 11px;
+            color: #374151;
+            padding: 3px 0;
+            padding-left: 14px;
+            position: relative;
+            line-height: 1.5;
+        }
+        .milestone-card-item::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+        .milestone-card-divider {
+            height: 1px;
+            background: #f3f4f6;
+            margin: 10px 0;
+        }
+
+        /* Risk strip */
+        .risk-strip {
+            margin-top: 32px;
+            padding: 16px 0;
+            border-top: 1px solid #e5e7eb;
+        }
+        .risk-strip-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        .risk-items {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .risk-item {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .risk-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: white;
+        }
+        .risk-badge.h { background: #dc2626; }
+        .risk-badge.mh { background: #f59e0b; }
+        .risk-badge.m { background: #9ca3af; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <h1>E1a Solo Station — SW Program Timeline</h1>
+        <div class="links">
+            <a href="https://docs.google.com/spreadsheets/d/1kUwfC9WfOL5ZGVvGi-cTjWYuQZfh2fpGCXI3UQ5MAe8/edit">Feature Matrix</a>
+            <a href="https://docs.google.com/document/d/1I-VJ6ziO8rPF3-vLu28HkmUZl3OzvLuREsoiQyjsyDk/edit">Core Notes</a>
+            <a href="https://docs.google.com/spreadsheets/d/1P9Sq92wFLQfC4xrYR85MrByTpfVA3wybZEBd2Dwy4PM/edit">Decisions</a>
+            <a href="https://effective-spork-v376p7n.pages.github.io/">Full Timeline →</a>
+        </div>
+    </div>
+    <div class="page-subtitle">May 2026 – April 2027 · PVT Pull-in Scenario · OK2Ship: TBD · <span style="color: #dc2626; font-weight: 600;">⚠️ NO PRE-PVT</span></div>
+
+    <div class="timeline">
+        <div class="timeline-inner">
+
+            <!-- Month Headers -->
+            <div class="month-row">
+                <div></div>
+                <div class="month-label current">May</div>
+                <div class="month-label">Jun</div>
+                <div class="month-label">Jul</div>
+                <div class="month-label">Aug</div>
+                <div class="month-label">Sep</div>
+                <div class="month-label">Oct</div>
+                <div class="month-label">Nov</div>
+                <div class="month-label">Dec</div>
+                <div class="month-label">Jan</div>
+                <div class="month-label">Feb</div>
+                <div class="month-label">Mar</div>
+                <div class="month-label">Apr</div>
+                <div class="month-label">May</div>
+                <div class="month-label">Jun</div>
+            </div>
+
+            <!-- Program Milestones -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label">Program<br>Milestones</div>
+                <!-- May: Concept Review -->
+                <div class="milestone">
+                    <div class="diamond amber"></div>
+                    <div class="milestone-text">Concept<br>Review</div>
+                    <div class="milestone-date">5/28</div>
+                </div>
+                <!-- Jun: Env Lock -->
+                <div class="milestone">
+                    <div class="diamond outline"></div>
+                    <div class="milestone-text">Env<br>Lock</div>
+                    <div class="milestone-date">6/1</div>
+                </div>
+                <!-- Jul: OK2Tool -->
+                <div class="milestone">
+                    <div class="diamond outline"></div>
+                    <div class="milestone-text">OK2Tool</div>
+                    <div class="milestone-date">7/15</div>
+                </div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <!-- Nov: Alpha -->
+                <div class="milestone">
+                    <div class="diamond outline"></div>
+                    <div class="milestone-text">Alpha</div>
+                    <div class="milestone-date">~Nov</div>
+                </div>
+                <div></div>
+                <!-- Jan: Beta (compressed) -->
+                <div class="milestone">
+                    <div class="diamond outline"></div>
+                    <div class="milestone-text">Beta</div>
+                    <div class="milestone-date">~Jan</div>
+                </div>
+                <!-- Feb: PVT -->
+                <div class="milestone">
+                    <div class="diamond blue"></div>
+                    <div class="milestone-text" style="color: #dc2626; font-weight: 700;">PVT ⚡</div>
+                    <div class="milestone-date">~2/14</div>
+                </div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+            <!-- Builds Row -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label">Builds</div>
+                <div></div>
+                <!-- Jun-Jul: Dev Build -->
+                <div style="grid-column: 3 / 4;">
+                    <div class="build-block dev">Dev Build<br><span style="font-weight:400;font-size:11px;">6/21 – 7/12</span></div>
+                </div>
+                <div></div>
+                <!-- Aug-Sep: Proto -->
+                <div style="grid-column: 5 / 6;">
+                    <div class="build-block proto">Proto<br><span style="font-weight:400;font-size:11px;">8/30 – 9/20</span></div>
+                </div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <!-- Dec-Jan: EVT -->
+                <div style="grid-column: 9 / 11;">
+                    <div class="build-block evt">EVT<br><span style="font-weight:400;font-size:11px;">12/13 – 1/17</span></div>
+                </div>
+                <div></div>
+                <div></div>
+                <!-- Feb: PVT (pulled in) -->
+                <div style="grid-column: 12 / 13;">
+                    <div class="build-block pvt" style="border: 2px solid #dc2626;">PVT ⚡<br><span style="font-weight:400;font-size:11px;">~2/14</span></div>
+                </div>
+            </div>
+
+            <!-- Section gap -->
+            <div class="timeline-row section-gap"></div>
+
+            <!-- SWIM LANES -->
+
+            <!-- Platform & Kernel -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Platform &<br>Kernel</div>
+                <div style="grid-column: 2 / 5; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">DTS, board config, kernel config <span class="arrow-duration">(8w)</span></div>
+                        <div class="arrow-line platform" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 5 / 9; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">OTA, SWUP, perf baseline <span class="arrow-duration">(12w)</span></div>
+                        <div class="arrow-line platform" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 9 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">SFI lockdown, feature freeze <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line platform" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Stability + prod hardening</div>
+                        <div class="arrow-line platform" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USB Power / PD -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">USB Power /<br>PD</div>
+                <div style="grid-column: 2 / 4; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">PD negotiation <span class="arrow-duration">(6w)</span></div>
+                        <div class="arrow-line drivers" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 4 / 6; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">DR_Swap + boot gate <span class="arrow-duration">(8w)</span></div>
+                        <div class="arrow-line drivers" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 6 / 9; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Fault handling, graceful shutdown <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line drivers" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 9 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Stable</div>
+                        <div class="arrow-line drivers" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Display</div>
+                <div style="grid-column: 2 / 4; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Basic eDP output <span class="arrow-duration">(6w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #0891b2;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 4 / 6; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Backlight + color cal <span class="arrow-duration">(8w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #0891b2;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 6 / 9; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Rotation + tuning <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #0891b2;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 9 / 11; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Locked</div>
+                        <div class="arrow-line" style="width: 100%; background: #0891b2;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Touch -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Touch</div>
+                <div style="grid-column: 2 / 4; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Basic input, I2C <span class="arrow-duration">(6w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #0d9488;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 4 / 7; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Tuning + secure touch <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #0d9488;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 7 / 10; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">WLAN desense fix <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #0d9488;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 10 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Stable</div>
+                        <div class="arrow-line" style="width: 100%; background: #0d9488;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NFC / Payments -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">NFC /<br>Payments</div>
+                <div style="grid-column: 2 / 5; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 5 / 8; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Coil validation + basic NFC <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line nfc" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 8 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">L1 tuning + cert <span class="arrow-duration">(14w)</span></div>
+                        <div class="arrow-line nfc" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">L2/L3 brand cert</div>
+                        <div class="arrow-line nfc" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audio -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Audio</div>
+                <div style="grid-column: 2 / 5; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 5 / 7; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Speaker bring-up <span class="arrow-duration">(6w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #ea580c;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 7 / 10; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Volume tuning + tones <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #ea580c;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 10 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Stable</div>
+                        <div class="arrow-line" style="width: 100%; background: #ea580c;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wi-Fi / BT / Ethernet -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Wi-Fi / BT /<br>Ethernet</div>
+                <div style="grid-column: 2 / 4; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Basic connectivity <span class="arrow-duration">(6w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #2563eb; opacity: 0.7;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 4 / 7; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Roaming, coex, BT pair <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #2563eb; opacity: 0.7;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 7 / 10; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Carrier cert prep <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #2563eb; opacity: 0.7;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 10 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Certified</div>
+                        <div class="arrow-line" style="width: 100%; background: #2563eb; opacity: 0.7;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensors & LEDs -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Sensors &<br>LEDs</div>
+                <div style="grid-column: 2 / 5; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 5 / 7; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Accel, ALS, LEDs, moisture <span class="arrow-duration">(6w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #65a30d;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 7 / 10; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Tuning + thresholds <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #65a30d;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 10 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Stable</div>
+                        <div class="arrow-line" style="width: 100%; background: #65a30d;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SPE Firmware -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">SPE<br>Firmware</div>
+                <div style="grid-column: 2 / 5; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 5 / 8; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">SPE comms + secure touch <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line spe" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 8 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Payment flows + NFC L1 FW <span class="arrow-duration">(14w)</span></div>
+                        <div class="arrow-line spe" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">L2/L3 + prod config</div>
+                        <div class="arrow-line spe" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thermal & Energy -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Thermal &<br>Energy</div>
+                <div style="grid-column: 2 / 8; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 8 / 11; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Thermal tuning + ErP <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line energy" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 13; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Energy Star cert <span class="arrow-duration">(8w)</span></div>
+                        <div class="arrow-line energy" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Factory / MTE -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Factory /<br>MTE</div>
+                <div style="grid-column: 2 / 5; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 5 / 7; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">NVM scripts, board ID <span class="arrow-duration">(6w)</span></div>
+                        <div class="arrow-line factory" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 7 / 10; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">FATP validation <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line factory" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 10 / 13; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">FV app + prod flow <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line factory" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">MP ready</div>
+                        <div class="arrow-line factory" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Apps & UX -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Apps & UX</div>
+                <div style="grid-column: 2 / 8; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 8 / 11; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">POS layout, orientation, OOB <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line apps" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 14; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Accessibility, R42 UX <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line apps" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Full experience</div>
+                        <div class="arrow-line apps" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation & Cert -->
+            <div class="timeline-row bordered" style="min-height: 52px;">
+                <div class="row-label dark">Validation &<br>Cert</div>
+                <div style="grid-column: 2 / 8; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 8 / 11; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">EMVCo L1, PCI PTS <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line validation" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 14; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">FCC/CE, carrier cert <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line validation" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 11 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">OK2Ship gate</div>
+                        <div class="arrow-line validation" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accessories -->
+            <div class="timeline-row" style="min-height: 52px;">
+                <div class="row-label dark">Accessories<br>(H6 / R42)</div>
+                <div style="grid-column: 2 / 5; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-line dashed" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 5 / 7; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Hub basic, Ethernet <span class="arrow-duration">(6w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #7c3aed; opacity: 0.8;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 7 / 10; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Hot-plug, R42 swipe <span class="arrow-duration">(10w)</span></div>
+                        <div class="arrow-line" style="width: 100%; background: #7c3aed; opacity: 0.8;"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 10 / 12; padding: 8px 4px;">
+                    <div class="arrow-container">
+                        <div class="arrow-label">Full validation</div>
+                        <div class="arrow-line" style="width: 100%; background: #7c3aed; opacity: 0.8;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SW Build Milestones -->
+    <div style="margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px;">
+        <div class="milestone-section-title">SW Build Milestones</div>
+        <div class="milestone-cards">
+            <!-- Dev Build -->
+            <div class="milestone-card">
+                <div class="milestone-card-header dev">
+                    <div class="milestone-card-title">Dev Build</div>
+                    <div class="milestone-card-date">Jun 21, 2026</div>
+                </div>
+                <div class="milestone-card-body">
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label entry">ENTRY</div>
+                        <div class="milestone-card-item">Boot + display + touch on HW</div>
+                        <div class="milestone-card-item">PD negotiates, H6 enumerates</div>
+                        <div class="milestone-card-item">Wi-Fi / BT / Eth + ADB</div>
+                    </div>
+                    <div class="milestone-card-divider"></div>
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label exit">EXIT</div>
+                        <div class="milestone-card-item">DR_Swap + hub validated on real HW</div>
+                        <div class="milestone-card-item">SPE FW integrated + FWUP</div>
+                        <div class="milestone-card-item">dm-verity, SELinux, vbmeta keys</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proto -->
+            <div class="milestone-card">
+                <div class="milestone-card-header proto">
+                    <div class="milestone-card-title">Proto</div>
+                    <div class="milestone-card-date">Aug 30, 2026</div>
+                </div>
+                <div class="milestone-card-body">
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label entry">ENTRY</div>
+                        <div class="milestone-card-item">Boot gate (block on low power)</div>
+                        <div class="milestone-card-item">Secure touch mode (PIN)</div>
+                        <div class="milestone-card-item">Factory provisioning ready</div>
+                    </div>
+                    <div class="milestone-card-divider"></div>
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label exit">EXIT</div>
+                        <div class="milestone-card-item">Security lockdown (fuse, FBE)</div>
+                        <div class="milestone-card-item">Thermal mitigation + report</div>
+                        <div class="milestone-card-item">Regulatory SW ready</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVT (expanded exit — absorbs Pre-PVT items) -->
+            <div class="milestone-card" style="border: 2px solid #f59e0b;">
+                <div class="milestone-card-header evt">
+                    <div class="milestone-card-title">EVT ⚠️</div>
+                    <div class="milestone-card-date">Dec 13, 2026</div>
+                </div>
+                <div class="milestone-card-body">
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label entry">ENTRY</div>
+                        <div class="milestone-card-item">Factory identity injection</div>
+                        <div class="milestone-card-item">Display whitepoint calibration</div>
+                        <div class="milestone-card-item">Warg security parity</div>
+                    </div>
+                    <div class="milestone-card-divider"></div>
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label exit">EXIT (expanded — feature freeze)</div>
+                        <div class="milestone-card-item">Thermal final validation (EVT report)</div>
+                        <div class="milestone-card-item">ErP power testing passes</div>
+                        <div class="milestone-card-item">JTAG locked down</div>
+                        <div class="milestone-card-item" style="color: #dc2626; font-weight: 600;">Boot time requirements met ←</div>
+                        <div class="milestone-card-item" style="color: #dc2626; font-weight: 600;">All drivers locked (feature freeze) ←</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PVT (pulled in — Feb 14) -->
+            <div class="milestone-card" style="border: 2px solid #dc2626;">
+                <div class="milestone-card-header pvt">
+                    <div class="milestone-card-title">PVT ⚡</div>
+                    <div class="milestone-card-date">~Feb 14, 2027</div>
+                </div>
+                <div class="milestone-card-body">
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label entry">ENTRY (absorbs Pre-PVT gates)</div>
+                        <div class="milestone-card-item" style="color: #dc2626; font-weight: 600;">FA image validated end-to-end ←</div>
+                        <div class="milestone-card-item" style="color: #dc2626; font-weight: 600;">UFS partition lock enabled ←</div>
+                        <div class="milestone-card-item" style="color: #dc2626; font-weight: 600;">Full factory flow validated ←</div>
+                    </div>
+                    <div class="milestone-card-divider"></div>
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label exit">EXIT</div>
+                        <div class="milestone-card-item">Production OTA pipeline validated</div>
+                        <div class="milestone-card-item">MP-ready factory image</div>
+                        <div class="milestone-card-item">OK2Ship gate criteria met</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="milestone-section-title" style="margin-top: 16px;">SW Release Milestones (Alpha / Beta / GA)</div>
+        <div class="milestone-cards-sw">
+            <!-- Alpha -->
+            <div class="milestone-card">
+                <div class="milestone-card-header" style="background: #dcfce7;">
+                    <div class="milestone-card-title">Alpha</div>
+                    <div class="milestone-card-date">~Nov 2026</div>
+                </div>
+                <div class="milestone-card-body">
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label" style="color: #166534; background: #f0fdf4;">KEY DELIVERABLES</div>
+                        <div class="milestone-card-item">SWUP parity (OTA differential + non-diff + IAU)</div>
+                        <div class="milestone-card-item">R42 swipe via USB-C working</div>
+                        <div class="milestone-card-item">Performance KPIs validated + scheduler tuning</div>
+                        <div class="milestone-card-item">Thermal telemetry + shutdown + app warnings</div>
+                        <div class="milestone-card-item">ALS auto-brightness checkpoint</div>
+                        <div class="milestone-card-item">Telemetry parity + new E1a metrics</div>
+                        <div class="milestone-card-item">LocalConnect parity</div>
+                        <div class="milestone-card-item">Boot animations + system sounds + model name locked</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Beta -->
+            <div class="milestone-card">
+                <div class="milestone-card-header" style="background: #fef9c3;">
+                    <div class="milestone-card-title">Beta</div>
+                    <div class="milestone-card-date">~Jan 2027 (compressed)</div>
+                </div>
+                <div class="milestone-card-body">
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label" style="color: #854d0e; background: #fefce8;">KEY DELIVERABLES</div>
+                        <div class="milestone-card-item">Accessibility complete (TalkBack, Magnify, accessible PIN)</div>
+                        <div class="milestone-card-item">PCI compliance + pentest support</div>
+                        <div class="milestone-card-item">Anti-rollback validated + EFFA image e2e</div>
+                        <div class="milestone-card-item">All launch languages + translations + locale validation</div>
+                        <div class="milestone-card-item">Final boot animation integrated</div>
+                        <div class="milestone-card-item">BT regional power levels</div>
+                        <div class="milestone-card-item">Performance + memory checkpoint - Beta</div>
+                        <div class="milestone-card-item">Audio tuning final checkpoint</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GA -->
+            <div class="milestone-card">
+                <div class="milestone-card-header" style="background: #f3e8ff;">
+                    <div class="milestone-card-title">GA</div>
+                    <div class="milestone-card-date">TBD</div>
+                </div>
+                <div class="milestone-card-body">
+                    <div class="milestone-card-section">
+                        <div class="milestone-card-label" style="color: #6b21a8; background: #faf5ff;">KEY DELIVERABLES</div>
+                        <div class="milestone-card-item">GA anti-rollback version bump</div>
+                        <div class="milestone-card-item">Performance checkpoint - GA</div>
+                        <div class="milestone-card-item">Memory / LMK checkpoint - GA</div>
+                        <div class="milestone-card-item">Log spam reduction - GA</div>
+                        <div class="milestone-card-item">Final locale / country validation</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Strip -->
+    <div class="risk-strip">
+        <div class="risk-strip-title">Top SW Risks</div>
+        <div class="risk-items">
+            <div class="risk-item"><span class="risk-badge h">H</span> NFC L1 — coil needs physical proto validation</div>
+            <div class="risk-item"><span class="risk-badge h">H</span> Schedule compression — EVT→PVT in 8 weeks, no Pre-PVT</div>
+            <div class="risk-item"><span class="risk-badge mh">MH</span> Android 16 — decision on hold, late = rebase</div>
+            <div class="risk-item"><span class="risk-badge mh">MH</span> Touch WLAN desense — same IC as K1a</div>
+            <div class="risk-item"><span class="risk-badge mh">MH</span> Thermal — one fewer validation pass (no Pre-PVT)</div>
+            <div class="risk-item"><span class="risk-badge mh">MH</span> Factory flow — must validate on EVT, no second chance</div>
+            
+            <div class="risk-item"><span class="risk-badge m">M</span> STUSB4531 — new PD controller</div>
+            <div class="risk-item"><span class="risk-badge m">M</span> Batteryless — novel power mgmt</div>
+            <div class="risk-item"><span class="risk-badge m">M</span> No DVT — compressed validation</div>
+        </div>
+    </div>
+
+</body>
+</html>

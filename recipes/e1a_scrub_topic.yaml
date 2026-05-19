@@ -1,0 +1,87 @@
+name: E1a Topic Scrubber
+description: |
+  Scrub all E1a program sources for the latest information on a given topic.
+  Returns a structured summary with status, decisions, open items, DRI, and sources.
+
+prompt: |
+  The user wants to scrub all E1a program sources for the latest information on: "{{topic}}"
+
+  ## Sources to Check (in this order)
+
+  1. **E1a Core Meeting Notes** (Google Doc ID: 1I-VJ6ziO8rPF3-vLu28HkmUZl3OzvLuREsoiQyjsyDk)
+     - Search for all mentions of the topic across all meeting dates
+
+  2. **Hardware UnBlock Weekly Notes** (Google Doc ID: 17fafrC1P0OsP3iFSMNul7x2hg8PggFOFy9_Un0OD4qw)
+     - Check all tabs/meeting dates for mentions
+
+  3. **E1a Feature Matrix** (Google Sheet ID: 1kUwfC9WfOL5ZGVvGi-cTjWYuQZfh2fpGCXI3UQ5MAe8)
+     - Check "Feature Matrix" sheet for related tasks
+     - Check "Project Assumptions" sheet for related assumptions
+     - Check "Todo / To Discuss" sheet for open items
+
+  4. **E1a Decisions Tracker** (Google Sheet ID: 1P9Sq92wFLQfC4xrYR85MrByTpfVA3wybZEBd2Dwy4PM)
+     - Check for any decisions related to the topic
+
+  5. **Slack Channels** — Search for the topic in:
+     - #e1a-core
+     - #e1a-ee
+     - #e1a-squid
+     - #e1a-spe
+     - #squid-dev
+
+  6. **STUSB4531 Tech Report** (Google Doc ID: 1zkIU8f7LmXQ2SA61_0q0TGCCOJ1uNFi3hYIGgFswTkw)
+     - Only if topic is related to USB, power, PD, STUSB, batteryless, or factory
+
+  7. **E1a PRD** (Google Doc ID: 1xzIUQ8pBkIpKzj2O-LtqpEj65o-6_-GQBmAKntLI4wg)
+     - Only if topic is related to product requirements, specs, or market
+
+  8. **Combined NPI DRI Sheet** (Google Sheet ID: 1LcUVGvxIqZDN2Eav976aXzn_r1irgkM-fr556_3btm8)
+     - Only if topic is related to ownership or DRI
+
+  ## Output Format
+
+  Return the results in this exact format:
+
+  ---
+  ## Scrub Results: {{topic}}
+  **Last Updated:** [today's date]
+
+  ### Latest Status
+  [Most recent mention with date and source]
+
+  ### Decision History (Chronological)
+  | Date | Decision/Update | Source | Who |
+  |------|----------------|--------|-----|
+  | ... | ... | ... | ... |
+
+  ### Open Items / Blockers
+  - [List any unresolved items, TBDs, or blockers]
+
+  ### DRI / Ownership
+  - **Primary:** [name]
+  - **Supporting:** [names]
+
+  ### Feature Matrix Tasks
+  | Task | Build | Status |
+  |------|-------|--------|
+  | ... | ... | ... |
+
+  ### Risk Assessment
+  - **Risk Level:** [L / M / MH / H]
+  - **Rationale:** [why]
+
+  ### Sources Referenced
+  - [List each source checked with link and whether it had relevant info]
+  ---
+
+  ## Rules
+  - Do NOT guess or extrapolate. Only report what is explicitly stated in the sources.
+  - If a source has no relevant information, say "No mentions found."
+  - Always include the date of the most recent mention.
+  - If there are conflicting statements across sources, flag the conflict.
+  - Prefer the most recent source when information conflicts.
+
+extensions:
+  - googledrive
+  - slack
+  - glean

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E1a Solo Station — One Pager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            padding: 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            border-bottom: 3px solid #1a1a1a;
+            padding-bottom: 20px;
+        }
+        .header-left h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .header-left .subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .header-right {
+            text-align: right;
+            font-size: 12px;
+            color: #999;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .section h2 {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #666;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 4px;
+        }
+        .overview-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .spec-table tr {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .spec-table tr:last-child {
+            border-bottom: none;
+        }
+        .spec-table td {
+            padding: 6px 0;
+            font-size: 12px;
+            vertical-align: top;
+        }
+        .spec-table td:first-child {
+            font-weight: 600;
+            color: #555;
+            width: 140px;
+            padding-right: 12px;
+        }
+        .spec-table td:last-child {
+            color: #1a1a1a;
+        }
+        .image-placeholder {
+            width: 100%;
+            height: 280px;
+            background: #f5f5f5;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 13px;
+            font-style: italic;
+        }
+        .accessories-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 4px;
+            font-size: 12px;
+        }
+        .accessories-grid .item {
+            padding: 3px 0;
+            color: #333;
+        }
+        .accessories-grid .item span {
+            color: #888;
+            font-size: 11px;
+        }
+        .markets-list {
+            font-size: 12px;
+            color: #333;
+            line-height: 1.8;
+        }
+        .tag {
+            display: inline-block;
+            background: #f0f0f0;
+            border-radius: 3px;
+            padding: 2px 8px;
+            font-size: 11px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+        }
+        @media print {
+            body { padding: 20px; }
+            .content { gap: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>Square Solo Station</h1>
+            <div class="subtitle">E1a &nbsp;|&nbsp; Countertop POS Terminal</div>
+        </div>
+        <div class="header-right">
+            <div>SQUARE HARDWARE</div>
+            <div style="margin-top: 4px;">Confidential — Internal Use Only</div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="left-col">
+
+            <div class="section">
+                <h2>Overview</h2>
+                <p class="overview-text">
+                    Solo Station is a purpose-built, seller-facing POS terminal designed exclusively for restaurant and bar staff. It lives behind the counter, at the server station, or on the back bar where staff ring in orders, manage tabs, and close out checks. The 14" touchscreen gives servers and bartenders the screen real estate they need to navigate complex menus quickly during a rush. Built on the SQUID (Android) platform with integrated NFC and EMV payments, it replaces the need for a second screen entirely. Powered via USB-C through the included 60W adapter and accessories hub.
+                </p>
+            </div>
+
+            <div class="section">
+                <h2>Product Image</h2>
+                <img src="/Users/gprice/Downloads/05 12 2026 E1 Concepts.828.png" alt="E1a Solo Station render" style="width: 100%; border-radius: 8px; object-fit: cover;">
+            </div>
+
+            <div class="section">
+                <h2>In-Box Accessories</h2>
+                <div class="accessories-grid">
+                    <div class="item"><strong>H6</strong> Accessories Hub <span>— 3×USB-A, Ethernet, USB-C, IP54, moisture detection</span></div>
+                    <div class="item"><strong>P9</strong> Power Adapter <span>— 60W, non-captive USB-C, IP54</span></div>
+                    <div class="item"><strong>C61</strong> AC Cable <span>— 3-prong ground, 1.23m</span></div>
+                    <div class="item"><strong>C72B</strong> USB-C Cable <span>— 2m, black (P9 → H6 or P9 → E1a)</span></div>
+                    <div class="item"><strong>C08</strong> USB-C Cable <span>— 0.8m (H6 → E1a)</span></div>
+                    <div class="item"><strong>C35</strong> USB-C to Audio Jack <span>— UK/EU only (EAA compliance)</span></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Optional Accessories</h2>
+                <div class="accessories-grid">
+                    <div class="item"><strong>R42</strong> <span>— USB-C MSR swipe reader (US only)</span></div>
+                    <div class="item"><strong>Ethernet receipt printer</strong> <span>— via H6 hub</span></div>
+                    <div class="item"><strong>Cash drawer</strong> <span>— via H6 USB-A</span></div>
+                    <div class="item"><strong>Barcode scanner</strong> <span>— via H6 USB-A</span></div>
+                    <div class="item"><strong>USB-C keyboard</strong> <span>— via Port 2 or H6 USB-A</span></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Target Customers</h2>
+                <p class="overview-text">
+                    Full-Service Restaurants (FSRs) and Bars — seller-only workstations for order entry and payment processing. Typical placements: podium, back bar, server station, wall-mounted (VESA SKU follow-on).
+                </p>
+            </div>
+
+        </div>
+
+        <div class="right-col">
+
+            <div class="section">
+                <h2>Specifications</h2>
+                <table class="spec-table">
+                    <tr>
+                        <td>Display</td>
+                        <td>14" diagonal, 1920×1080 (16:9), ≥166 ppi<br>Tianma eDP, Gorilla Glass 3, PVD anti-fingerprint</td>
+                    </tr>
+                    <tr>
+                        <td>Touch</td>
+                        <td>Microchip ATMXT2952TD capacitive<br>Secure Touch Mode (PIN on glass capable)</td>
+                    </tr>
+                    <tr>
+                        <td>Orientation</td>
+                        <td>Landscape (primary); Portrait via accelerometer</td>
+                    </tr>
+                    <tr>
+                        <td>Dimensions</td>
+                        <td>Max 14" W × 10" H × 5" D (with stand)</td>
+                    </tr>
+                    <tr>
+                        <td>Weight</td>
+                        <td>Max 4.0 lb (1.8 kg)</td>
+                    </tr>
+                    <tr>
+                        <td>Tilt</td>
+                        <td>30° vertical to 75° flat (adjustable on stand)</td>
+                    </tr>
+                    <tr>
+                        <td>Processor</td>
+                        <td>Qualcomm QCS6490</td>
+                    </tr>
+                    <tr>
+                        <td>OS</td>
+                        <td>SQUID (Android 14), Linux Kernel 5.4</td>
+                    </tr>
+                    <tr>
+                        <td>Payment Engine</td>
+                        <td>Gen3 SPE (STM32U5, ARM Cortex-M33)</td>
+                    </tr>
+                    <tr>
+                        <td>Payment Types</td>
+                        <td>NFC contactless (built-in) — incl. FeliCa<br>EMV chip dip (built-in)<br>MSR swipe (via R42 USB-C accessory)</td>
+                    </tr>
+                    <tr>
+                        <td>Connectivity</td>
+                        <td>Wi-Fi 6E (802.11ax — 2.4/5/6 GHz)<br>Bluetooth LE 5.2<br>Ethernet 100 Mbps (via H6 hub)</td>
+                    </tr>
+                    <tr>
+                        <td>Ports</td>
+                        <td>USB-C ×2 (power + debug/accessory)<br>EMV dip slot</td>
+                    </tr>
+                    <tr>
+                        <td>Power</td>
+                        <td>USB-C PD (STUSB4531 sink controller)<br>60W system via P9 adapter<br>Batteryless (coin cells for RTC + tamper)</td>
+                    </tr>
+                    <tr>
+                        <td>IP Rating</td>
+                        <td>IP54 target (IPx4 min, IP5x dust)</td>
+                    </tr>
+                    <tr>
+                        <td>Sensors</td>
+                        <td>ALS (auto-brightness), Accelerometer,<br>USB-C moisture detection, Thermal monitoring</td>
+                    </tr>
+                    <tr>
+                        <td>LEDs</td>
+                        <td>Tap icon + Dip icon (RGBW, independently addressable)</td>
+                    </tr>
+                    <tr>
+                        <td>Audio</td>
+                        <td>1 speaker (shared MLB + SPE tones)<br>Headphone out via USB-C Port 2</td>
+                    </tr>
+                    <tr>
+                        <td>Environmental</td>
+                        <td>Op: 0°–40°C &nbsp;|&nbsp; Storage: -20°–60°C<br>Humidity: 20–80% (op), 10–90% (storage)</td>
+                    </tr>
+                    <tr>
+                        <td>Lifespan</td>
+                        <td>4 yr production + 5 yr SW support<br>~9 yr total product lifespan</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>Target Schedule</h2>
+                <table class="spec-table">
+                    <tr>
+                        <td>OK2Ship</td>
+                        <td>Q2 2027</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>Targeted Certifications</h2>
+                <div>
+                    <span class="tag">EMVCo L1 CT/CL</span>
+                    <span class="tag">EMVCo L2 CT</span>
+                    <span class="tag">Brand L2/L3 (MC/Visa/Amex/Discover/JCB/CUP)</span>
+                    <span class="tag">PCI PTS</span>
+                    <span class="tag">FeliCa / E-Money (JP)</span>
+                    <span class="tag">Energy Star / ErP</span>
+                    <span class="tag">FCC / CE / IC</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Launch Markets</h2>
+                <div class="markets-list">
+                    <span class="tag">🇺🇸 US</span>
+                    <span class="tag">🇨🇦 Canada</span>
+                    <span class="tag">🇦🇺 Australia</span>
+                    <span class="tag">🇬🇧 UK</span>
+                    <span class="tag">🇮🇪 Ireland</span>
+                    <span class="tag">🇪🇸 Spain</span>
+                    <span class="tag">🇫🇷 France</span>
+                    <span class="tag">🇯🇵 Japan</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="footer">
+        <div></div>
+        <div>E1a Solo Station &nbsp;|&nbsp; Square Hardware &nbsp;|&nbsp; May 2026</div>
+    </div>
+</body>
+</html>

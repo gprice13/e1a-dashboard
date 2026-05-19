@@ -1,0 +1,66 @@
+name: E1a Weekly Digest
+description: |
+  Weekly scrub of all open E1a decisions, risks, and blockers.
+  Checks all sources for updates from the past 7 days.
+
+prompt: |
+  Generate a weekly digest for the E1a program. Check all sources for updates from the past 7 days.
+
+  ## Sources to Check
+
+  1. **E1a Core Meeting Notes** (Google Doc ID: 1I-VJ6ziO8rPF3-vLu28HkmUZl3OzvLuREsoiQyjsyDk)
+  2. **Hardware UnBlock Weekly Notes** (Google Doc ID: 17fafrC1P0OsP3iFSMNul7x2hg8PggFOFy9_Un0OD4qw)
+  3. **E1a Feature Matrix** (Google Sheet ID: 1kUwfC9WfOL5ZGVvGi-cTjWYuQZfh2fpGCXI3UQ5MAe8)
+  4. **E1a Decisions Tracker** (Google Sheet ID: 1P9Sq92wFLQfC4xrYR85MrByTpfVA3wybZEBd2Dwy4PM)
+  5. **Slack** — #e1a-core, #e1a-ee, #e1a-squid, #e1a-spe (last 7 days)
+
+  ## Topics to Track
+
+  Scrub for updates on each of these open items:
+  1. NFC coil geometry / L1 certification
+  2. Android 16 decision
+  3. Touch WLAN desense (EE-7424)
+  4. STUSB4531 / USB PD integration
+  5. Batteryless power management / ErP
+  6. MPoC / Secure PIN investigation
+  7. Schedule changes (build dates, PVT pull-in)
+  8. Factory / Wistron readiness
+  9. Thermal validation
+  10. Any new decisions opened or closed
+
+  ## Output Format
+
+  ---
+  ## E1a Weekly Digest — [date range]
+
+  ### 🔴 Decisions Closed This Week
+  | Decision | Outcome | Date | Source |
+  |----------|---------|------|--------|
+
+  ### 🟡 Decisions Still Open (with updates)
+  | Decision | Latest Update | Source |
+  |----------|--------------|--------|
+
+  ### 📋 Key Updates by Topic
+  [For each topic that had activity this week, provide a 1-2 sentence summary]
+
+  ### ⚠️ New Risks or Blockers Identified
+  - [List any new risks surfaced this week]
+
+  ### 📅 Upcoming (Next 2 Weeks)
+  - [Any meetings, deadlines, or milestones coming up]
+
+  ### ✅ No Updates
+  - [List topics with no new information this week]
+  ---
+
+  ## Rules
+  - Only report actual updates from the past 7 days
+  - Do NOT repeat old information unless it changed
+  - Flag any conflicting information across sources
+  - Keep it concise — this is a digest, not a full report
+
+extensions:
+  - googledrive
+  - slack
+  - glean
